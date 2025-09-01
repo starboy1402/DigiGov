@@ -6,4 +6,5 @@ import java.util.Optional;
 
 public interface CitizenProfileRepository extends JpaRepository<CitizenProfile, Long> {
     Optional<CitizenProfile> findByUserEmail(String email);
+    Optional<CitizenProfile> findByUser(com.govportal.backend.entity.User user);
 }

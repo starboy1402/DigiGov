@@ -6,49 +6,87 @@ import com.govportal.backend.entity.User;
 import com.govportal.backend.repository.CitizenProfileRepository;
 import com.govportal.backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CitizenProfileService {
 
-    private final CitizenProfileRepository profileRepository;
+    private final CitizenProfileRepository citizenProfileRepository;
     private final UserRepository userRepository;
 
-    public CitizenProfileService(CitizenProfileRepository profileRepository, UserRepository userRepository) {
-        this.profileRepository = profileRepository;
+    public CitizenProfileService(CitizenProfileRepository citizenProfileRepository, UserRepository userRepository) {
+        this.citizenProfileRepository = citizenProfileRepository;
         this.userRepository = userRepository;
     }
 
-    public CitizenProfile createProfile(CitizenProfileDTO profileDTO, String userEmail) {
+    @Transactional
+    public CitizenProfileDTO createProfile(CitizenProfileDTO profileDTO, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found in database."));
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        if (citizenProfileRepository.findByUser(user).isPresent()) {
+            throw new RuntimeException("Profile already exists for this user.");
+        }
 
         CitizenProfile profile = new CitizenProfile();
         profile.setUser(user);
-        profile.setName(profileDTO.getName());
-        profile.setFathersName(profileDTO.getFathersName());
-        profile.setMothersName(profileDTO.getMothersName());
-        profile.setDateOfBirth(profileDTO.getDateOfBirth());
-        profile.setNidNumber(profileDTO.getNidNumber());
-        profile.setGender(profileDTO.getGender());
-        profile.setReligion(profileDTO.getReligion());
-        profile.setCurrentAddress(profileDTO.getCurrentAddress());
-        profile.setPermanentAddress(profileDTO.getPermanentAddress());
-        profile.setProfession(profileDTO.getProfession());
+        // ... map all other fields from DTO to entity ...
+        mapDtoToEntity(profileDTO, profile);
 
-        return profileRepository.save(profile);
+        CitizenProfile savedProfile = citizenProfileRepository.save(profile);
+        return mapEntityToDto(savedProfile);
     }
-        public CitizenProfileDTO getProfileByUserEmail(String email) {
-        // 1. Ask the "Repository" to find the profile in the database.
-        return profileRepository.findByUserEmail(email)
-                // 2. If a profile is found...
-                .map(profile -> {
-                    // ...convert it to a DTO (a safe data format for the API).
-                    CitizenProfileDTO dto = new CitizenProfileDTO();
-                    // ... map all the fields ...
-                    return dto;
-                })
-                // 3. If no profile is found, return null.
+    
+    // --- NEW METHOD ---
+    @Transactional
+    public CitizenProfileDTO updateProfile(CitizenProfileDTO profileDTO, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        CitizenProfile profile = citizenProfileRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("Profile not found for this user."));
+
+        // Update existing profile with new data from DTO
+        mapDtoToEntity(profileDTO, profile);
+        
+        CitizenProfile updatedProfile = citizenProfileRepository.save(profile);
+        return mapEntityToDto(updatedProfile);
+    }
+
+    @Transactional(readOnly = true)
+    public CitizenProfileDTO getProfileByUserEmail(String email) {
+        return citizenProfileRepository.findByUserEmail(email)
+                .map(this::mapEntityToDto)
                 .orElse(null);
+    }
+
+    private void mapDtoToEntity(CitizenProfileDTO dto, CitizenProfile entity) {
+        entity.setName(dto.getName());
+        entity.setFathersName(dto.getFathersName());
+        entity.setMothersName(dto.getMothersName());
+        entity.setDateOfBirth(dto.getDateOfBirth());
+        entity.setNidNumber(dto.getNidNumber());
+        entity.setGender(dto.getGender());
+        entity.setReligion(dto.getReligion());
+        entity.setCurrentAddress(dto.getCurrentAddress());
+        entity.setPermanentAddress(dto.getPermanentAddress());
+        entity.setProfession(dto.getProfession());
+    }
+
+    private CitizenProfileDTO mapEntityToDto(CitizenProfile entity) {
+        CitizenProfileDTO dto = new CitizenProfileDTO();
+        dto.setCitizenProfileId(entity.getId());
+        dto.setName(entity.getName());
+        dto.setFathersName(entity.getFathersName());
+        dto.setMothersName(entity.getMothersName());
+        dto.setDateOfBirth(entity.getDateOfBirth());
+        dto.setNidNumber(entity.getNidNumber());
+        dto.setGender(entity.getGender());
+        dto.setReligion(entity.getReligion());
+        dto.setCurrentAddress(entity.getCurrentAddress());
+        dto.setPermanentAddress(entity.getPermanentAddress());
+        dto.setProfession(entity.getProfession());
+        return dto;
     }
 }
 

@@ -2,7 +2,8 @@ package com.govportal.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import java.util.Date;
+
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "citizen_profiles")
@@ -27,9 +28,8 @@ public class CitizenProfile {
     @Column(name = "mothers_name")
     private String mothersName;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "date_of_birth")
-    private Date dateOfBirth;
+      private LocalDate dateOfBirth;
 
     @Column(name = "nid_number", nullable = false, unique = true)
     private String nidNumber;
@@ -55,4 +55,6 @@ public class CitizenProfile {
     public enum Religion {
         ISLAM, HINDUISM, CHRISTIANITY, BUDDHISM, OTHER
     }
+
+
 }

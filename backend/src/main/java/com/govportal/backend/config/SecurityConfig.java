@@ -42,9 +42,10 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/api/admin/login").permitAll() // Public endpoints
-                .requestMatchers("/api/citizen-profiles/**").authenticated() // Secure this endpoint
-                .anyRequest().authenticated() // All other endpoints require authentication
+                .requestMatchers("/api/auth/**", "/api/admin/login").permitAll()
+                .requestMatchers("/api/citizen-profiles/**").authenticated()
+                .requestMatchers("/api/applications/**").authenticated() // Secure the new endpoint
+                .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

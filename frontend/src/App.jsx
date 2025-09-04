@@ -75,7 +75,7 @@ const API = {
     },
     updateProfile: async (data, token) => {
         const response = await fetch(`${API_BASE_URL}/api/citizen-profiles`, {
-            method: 'PUT', // Use PUT for updates
+            method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
@@ -99,19 +99,27 @@ const API = {
             throw new Error('Failed to fetch profile');
         }
         return response.json();
+    },
+    createApplication: async (data, token) => {
+        const response = await fetch(`${API_BASE_URL}/api/applications`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || 'Application submission failed');
+        }
+        return response.json();
     }
 };
 
 
 // --- MOCK API (For features not yet built in the backend) ---
 const MOCK_API = {
-    createApplication: async (data) => {
-        console.log("Creating application:", data); await new Promise(r => setTimeout(r, 500));
-        const newApp = { id: Date.now(), ...data, paymentStatus: 'PENDING', status: 'PENDING', serviceName: getServiceName(data.serviceId) };
-        const existingApps = JSON.parse(localStorage.getItem('applications_user_1') || '[]');
-        localStorage.setItem('applications_user_1', JSON.stringify([...existingApps, newApp]));
-        return newApp;
-    },
     uploadDocument: async (data) => { console.log("Uploading document:", data); await new Promise(r => setTimeout(r, 500)); return { success: true, documentId: `doc_${Date.now()}` }; },
     submitPayment: async (data) => {
         console.log("Submitting payment:", data); await new Promise(r => setTimeout(r, 500));
@@ -433,7 +441,7 @@ const AuthForm = ({ isLogin, isAdminLogin }) => {
     );
 };
 
-const ProfilePage = () => {
+const ProfilePage = ({}) => {
     const { user } = useAuth();
     const { navigate } = useApp();
     const [formData, setFormData] = useState({ name: '', fathersName: '', mothersName: '', dateOfBirth: '', nidNumber: '', gender: '', religion: '', currentAddress: '', permanentAddress: '', profession: '' });
@@ -441,18 +449,16 @@ const ProfilePage = () => {
     const [isUpdate, setIsUpdate] = useState(false);
 
     useEffect(() => { 
-        if (user) {
-            const existingProfile = JSON.parse(localStorage.getItem('profile'));
-            if (existingProfile) {
-                const formattedProfile = {
-                    ...existingProfile,
-                    dateOfBirth: existingProfile.dateOfBirth ? new Date(existingProfile.dateOfBirth).toISOString().split('T')[0] : ''
-                };
-                setFormData(formattedProfile);
-                setIsUpdate(true);
-            }
+        const profileData = JSON.parse(localStorage.getItem('profile'));
+        if (profileData) {
+            const formattedProfile = {
+                ...profileData,
+                dateOfBirth: profileData.dateOfBirth ? new Date(profileData.dateOfBirth).toISOString().split('T')[0] : ''
+            };
+            setFormData(formattedProfile);
+            setIsUpdate(true);
         }
-    }, [user]);
+    }, []);
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.id]: e.target.value });
     
@@ -520,18 +526,32 @@ const ApplicationPage = () => {
     const serviceName = getServiceName(serviceId);
     const handleExtraChange = (e) => setExtraFields({ ...extraFields, [e.target.id]: e.target.value });
     const handleFileChange = (e) => setDocuments({ ...documents, [e.target.id]: e.target.files[0] });
+    
     const handleSubmit = async (e) => {
-        e.preventDefault(); setLoading(true);
-        const profile = JSON.parse(localStorage.getItem('profile'));
-        if (!profile) { alert("Please create your profile first."); navigate('profile'); return; }
-        const applicationData = { userId: user.userId, profileId: profile.profileId, serviceId, submissionDate: new Date().toISOString().split('T')[0], ...extraFields };
+        e.preventDefault(); 
+        setLoading(true);
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert("Authentication error. Please log in again.");
+            setLoading(false);
+            navigate('login');
+            return;
+        }
+
+        const applicationData = {
+            serviceId: serviceId,
+            serviceSpecificData: extraFields
+        };
+
         try {
-            const newApplication = await MOCK_API.createApplication(applicationData);
-            if (documents.NID_COPY) await MOCK_API.uploadDocument({ applicationId: newApplication.id, documentType: 'NID_COPY', file: documents.NID_COPY });
-            if (documents.PASSPORT_PHOTO) await MOCK_API.uploadDocument({ applicationId: newApplication.id, documentType: 'PASSPORT_PHOTO', file: documents.PASSPORT_PHOTO });
-            alert('Application submitted successfully!'); navigate('dashboard');
-        } catch (error) { alert('Failed to submit application.'); }
-        finally { setLoading(false); }
+            await API.createApplication(applicationData, token);
+            alert('Application submitted successfully!'); 
+            navigate('dashboard');
+        } catch (error) { 
+            alert(`Failed to submit application: ${error.message}`); 
+        } finally { 
+            setLoading(false); 
+        }
     };
 
     const handleServiceChange = (e) => {
@@ -543,18 +563,89 @@ const ApplicationPage = () => {
 
     const renderExtraFields = () => {
         switch (serviceId) {
-            case 1:
+            case 1: // Characteristic Certificate
                 return <>
                     <Input id="purpose" label="Purpose for Certificate" value={extraFields.purpose || ''} onChange={handleExtraChange} required />
                     <Input id="referenceOneName" label="Reference Person Name" value={extraFields.referenceOneName || ''} onChange={handleExtraChange} required />
+                    <Input id="referenceOneNID" label="Reference Person NID" value={extraFields.referenceOneNID || ''} onChange={handleExtraChange} required />
+                    <Input id="referenceOneContact" label="Reference Person Contact" value={extraFields.referenceOneContact || ''} onChange={handleExtraChange} required />
                 </>;
-            case 7:
+            case 2: // Marriage Certificate
                 return <>
-                    <Input id="bloodGroup" label="Blood Group" value={extraFields.bloodGroup || ''} onChange={handleExtraChange} required />
+                    <Input id="spouseName" label="Spouse's Full Name" value={extraFields.spouseName || ''} onChange={handleExtraChange} required />
+                    <Input id="spouseNID" label="Spouse's NID Number" value={extraFields.spouseNID || ''} onChange={handleExtraChange} required />
+                    <Input id="marriageDate" label="Date of Marriage" type="date" value={extraFields.marriageDate || ''} onChange={handleExtraChange} required />
+                    <Input id="placeOfMarriage" label="Place of Marriage" value={extraFields.placeOfMarriage || ''} onChange={handleExtraChange} required />
+                    <Input id="registrarLicenseNo" label="Marriage Registrar License No." value={extraFields.registrarLicenseNo || ''} onChange={handleExtraChange} required />
+                    <Input id="registrationSerialNo" label="Marriage Register Serial No." value={extraFields.registrationSerialNo || ''} onChange={handleExtraChange} required />
+                </>;
+            case 3: // Disability Certificate
+                return <>
+                    <Select id="disabilityType" label="Type of Disability" value={extraFields.disabilityType || ''} onChange={handleExtraChange} required 
+                        options={[{ value: 'PHYSICAL', label: 'Physical' }, { value: 'VISUAL', label: 'Visual' }, { value: 'HEARING', label: 'Hearing' }, { value: 'SPEECH', label: 'Speech' }, { value: 'INTELLECTUAL', label: 'Intellectual' }]} 
+                    />
+                    <Input id="medicalReportNo" label="Medical Report Reference No." value={extraFields.medicalReportNo || ''} onChange={handleExtraChange} required />
+                    <div className="md:col-span-2">
+                        <Textarea id="disabilityDescription" label="Brief Description of Disability" value={extraFields.disabilityDescription || ''} onChange={handleExtraChange} />
+                    </div>
+                </>;
+            case 4: // Death Certificate
+                return <>
+                    <Input id="deceasedName" label="Deceased Person's Full Name" value={extraFields.deceasedName || ''} onChange={handleExtraChange} required />
+                    <Input id="deceasedNID" label="Deceased Person's NID / Birth Cert. No." value={extraFields.deceasedNID || ''} onChange={handleExtraChange} required />
+                    <Input id="dateOfDeath" label="Date of Death" type="date" value={extraFields.dateOfDeath || ''} onChange={handleExtraChange} required />
+                    <Input id="placeOfDeath" label="Place of Death (Hospital/Address)" value={extraFields.placeOfDeath || ''} onChange={handleExtraChange} required />
+                    <Input id="causeOfDeath" label="Cause of Death" value={extraFields.causeOfDeath || ''} onChange={handleExtraChange} required />
+                    <Input id="applicantRelation" label="Relationship with Deceased" value={extraFields.applicantRelation || ''} onChange={handleExtraChange} required />
+                </>;
+            case 5: // Citizen Certificate
+                return <>
+                    <Input id="purpose" label="Purpose of Certificate" value={extraFields.purpose || ''} onChange={handleExtraChange} required placeholder="e.g., Passport Application" />
+                    <Input id="durationOfStay" label="Duration of Stay at Permanent Address" value={extraFields.durationOfStay || ''} onChange={handleExtraChange} required placeholder="e.g., 15 years" />
+                </>;
+            case 6: // Holding Tax
+                return <>
+                    <Input id="holdingNumber" label="Holding Number" value={extraFields.holdingNumber || ''} onChange={handleExtraChange} required />
+                    <Input id="wardNumber" label="Ward Number" type="number" value={extraFields.wardNumber || ''} onChange={handleExtraChange} required />
+                    <Input id="assessmentYear" label="Assessment Year" value={extraFields.assessmentYear || ''} onChange={handleExtraChange} required placeholder="e.g., 2024-2025" />
+                     <Select id="paymentPeriod" label="Payment Period" value={extraFields.paymentPeriod || ''} onChange={handleExtraChange} required 
+                        options={[{ value: 'Q1', label: 'Q1 (July - September)' }, { value: 'Q2', label: 'Q2 (October - December)' }, { value: 'Q3', label: 'Q3 (January - March)' }, { value: 'Q4', label: 'Q4 (April - June)' }]} 
+                    />
+                </>;
+            case 7: // National Health Card
+                return <>
+                    <Select id="bloodGroup" label="Blood Group" value={extraFields.bloodGroup || ''} onChange={handleExtraChange} required options={['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => ({value: bg, label: bg}))}/>
                     <Input id="emergencyContactName" label="Emergency Contact Name" value={extraFields.emergencyContactName || ''} onChange={handleExtraChange} required />
+                    <Input id="emergencyContactPhone" label="Emergency Contact Phone" type="tel" value={extraFields.emergencyContactPhone || ''} onChange={handleExtraChange} required />
+                    <div className="md:col-span-2"><Textarea id="preExistingConditions" label="Pre-existing Conditions (optional)" value={extraFields.preExistingConditions || ''} onChange={handleExtraChange} /></div>
+                </>;
+            case 8: // Birth Certificate
+                return <>
+                    <Input id="childsName" label="Child's Full Name" value={extraFields.childsName || ''} onChange={handleExtraChange} required />
+                    <Input id="dateOfBirth" label="Date of Birth" type="date" value={extraFields.dateOfBirth || ''} onChange={handleExtraChange} required />
+                    <Input id="placeOfBirth" label="Place of Birth (Address)" value={extraFields.placeOfBirth || ''} onChange={handleExtraChange} required />
+                    <Input id="hospitalName" label="Hospital/Clinic Name (if any)" value={extraFields.hospitalName || ''} onChange={handleExtraChange} />
+                    <Input id="fathersName" label="Father's Name" value={extraFields.fathersName || ''} onChange={handleExtraChange} required />
+                    <Input id="mothersName" label="Mother's Name" value={extraFields.mothersName || ''} onChange={handleExtraChange} required />
+                </>;
+            case 9: // Land Ownership Transfer
+                return <>
+                    <Input id="sellerName" label="Seller's Full Name" value={extraFields.sellerName || ''} onChange={handleExtraChange} required />
+                    <Input id="sellerNID" label="Seller's NID" value={extraFields.sellerNID || ''} onChange={handleExtraChange} required />
+                    <Input id="deedNumber" label="Deed (Dalil) Number" value={extraFields.deedNumber || ''} onChange={handleExtraChange} required />
+                    <Input id="landLocation" label="Land Location (Mouza, Khatian, Dag No.)" value={extraFields.landLocation || ''} onChange={handleExtraChange} required />
+                    <Input id="landArea" label="Area of Land (in decimals)" type="number" value={extraFields.landArea || ''} onChange={handleExtraChange} required />
+                </>;
+             case 10: // E-Tax Filing
+                return <>
+                    <Input id="tinNumber" label="Taxpayer's Identification Number (TIN)" value={extraFields.tinNumber || ''} onChange={handleExtraChange} required />
+                    <Input id="assessmentYear" label="Assessment Year" value={extraFields.assessmentYear || ''} onChange={handleExtraChange} required placeholder="e.g., 2024-2025"/>
+                    <Input id="taxableIncome" label="Total Taxable Income" type="number" value={extraFields.taxableIncome || ''} onChange={handleExtraChange} required />
+                    <Input id="taxPaid" label="Total Tax Paid" type="number" value={extraFields.taxPaid || ''} onChange={handleExtraChange} required />
+                    <Input id="paymentChallanNo" label="Payment Challan No." value={extraFields.paymentChallanNo || ''} onChange={handleExtraChange} />
                 </>;
             default:
-                return <p>Please select a service from the dropdown above.</p>;
+                return <p className="text-center text-gray-500">Please select a service from the dropdown above to see the form.</p>;
         }
     };
 
@@ -576,14 +667,14 @@ const ApplicationPage = () => {
             <p className="text-[#4E2A2A]/80 mb-8">Please fill out the required details below.</p>
             
             <form onSubmit={handleSubmit} className="space-y-8">
-                {serviceId && (
+                {serviceId ? (
                     <>
                         <div className="p-6 border rounded-xl bg-gray-50/30 border-gray-200">
                             <h3 className="font-semibold text-lg mb-4 text-[#4E2A2A]">Service Specific Information</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">{renderExtraFields()}</div>
                         </div>
                         <div className="p-6 border rounded-xl bg-gray-50/30 border-gray-200">
-                            <h3 className="font-semibold text-lg mb-4 text-[#4E2A2A]">Document Uploads</h3>
+                            <h3 className="font-semibold text-lg mb-4 text-[#4E2A2A]">Document Uploads (Coming Soon)</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <Input id="NID_COPY" label="NID Copy (PDF, JPG)" type="file" onChange={handleFileChange} />
                                 <Input id="PASSPORT_PHOTO" label="Passport Size Photo (JPG, PNG)" type="file" onChange={handleFileChange} />
@@ -591,7 +682,7 @@ const ApplicationPage = () => {
                         </div>
                         <Button type="submit" disabled={loading}>{loading ? 'Submitting...' : 'Submit Application'}</Button>
                     </>
-                )}
+                ) : <p className="text-center text-gray-500">Please select a service to begin.</p>}
             </form>
         </AnimatedCard>
     );

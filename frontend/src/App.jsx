@@ -250,26 +250,34 @@ const Button = ({ children, onClick, type = 'button', variant = 'primary', class
 const Input = ({ id, label, type = 'text', value, onChange, required = false, ...props }) => (
     <div className="relative">
         <input type={type} id={id} value={value} onChange={onChange} required={required} className="peer mt-1 block w-full px-4 py-3 bg-[#FFFBF5]/50 border-2 border-gray-300 rounded-lg shadow-sm placeholder-transparent focus:outline-none focus:ring-0 focus:border-[#E97451] transition-colors text-[#4E2A2A]" placeholder={label} {...props} />
-        <label htmlFor={id} className="absolute left-4 -top-2.5 text-sm text-gray-500 bg-white/0 peer-placeholder-shown:bg-transparent bg-clip-padding px-1 transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#c15c41] peer-focus:bg-[#FFFBF5]/80">{label}</label>
+        <label htmlFor={id} className="absolute left-4 -top-3.5 text-sm text-gray-500 bg-white/0 peer-placeholder-shown:bg-transparent bg-clip-padding px-1 transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-focus:-top-3.5 peer-focus:text-sm peer-focus:text-[#c15c41] peer-focus:bg-[#FFFBF5]">{label}</label>
     </div>
 );
 
 const Textarea = ({ id, label, value, onChange, required = false, ...props }) => (
     <div className="relative">
         <textarea id={id} value={value} onChange={onChange} required={required} rows="5" className="peer mt-1 block w-full px-4 py-3 bg-[#FFFBF5]/50 border-2 border-gray-300 rounded-lg shadow-sm placeholder-transparent focus:outline-none focus:ring-0 focus:border-[#E97451] transition-colors text-[#4E2A2A]" placeholder={label} {...props} />
-        <label htmlFor={id} className="absolute left-4 -top-2.5 text-sm text-gray-500 bg-white/0 peer-placeholder-shown:bg-transparent bg-clip-padding px-1 transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#c15c41] peer-focus:bg-[#FFFBF5]/80">{label}</label>
+        <label htmlFor={id} className="absolute left-4 -top-3.5 text-sm text-gray-500 bg-white/0 peer-placeholder-shown:bg-transparent bg-clip-padding px-1 transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-focus:-top-3.5 peer-focus:text-sm peer-focus:text-[#c15c41] peer-focus:bg-[#FFFBF5]">{label}</label>
     </div>
 );
 
 const Select = ({ id, label, value, onChange, options, required = false, className = '' }) => (
-    <div className={className}>
-        {label && <label htmlFor={id} className="block text-sm font-medium text-[#4E2A2A] mb-1">{label}</label>}
-        <select id={id} value={value} onChange={onChange} required={required} className="mt-1 block w-full pl-3 pr-10 py-3 text-base bg-[#FFFBF5]/50 border-2 border-gray-300 focus:outline-none focus:ring-[#E97451] focus:border-[#E97451] sm:text-sm rounded-lg text-[#4E2A2A]">
-            <option value="">Select...</option>
+    <div className={`relative ${className}`}>
+        <select id={id} value={value || ''} onChange={onChange} required={required} className="peer mt-1 block w-full px-4 py-3 bg-[#FFFBF5]/50 border-2 border-gray-300 rounded-lg shadow-sm appearance-none focus:outline-none focus:ring-0 focus:border-[#E97451] transition-colors text-[#4E2A2A] placeholder-transparent">
+            <option value="" disabled></option>
             {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
         </select>
+        <label htmlFor={id} className={`absolute left-4 text-gray-500 bg-white/0 bg-clip-padding px-1 transition-all duration-100 ease-in-out 
+            ${value ? '-top-3.5 text-sm text-[#c15c41] bg-[#FFFBF5]' : 'top-3.5 text-base'} 
+            peer-focus:-top-3.5 peer-focus:text-sm peer-focus:text-[#c15c41] peer-focus:bg-[#FFFBF5]`}>
+            {label}
+        </label>
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+        </div>
     </div>
 );
+
 
 const Spinner = () => <div className="flex justify-center items-center h-full"><div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[#E97451]"></div></div>;
 

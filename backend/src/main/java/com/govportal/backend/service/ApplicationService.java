@@ -49,12 +49,16 @@ public class ApplicationService {
         application.setService(service);
         application.setSubmissionDate(LocalDate.now());
         application.setStatus(Application.ApplicationStatus.PENDING);
+        
+        // --- THIS IS THE CRUCIAL FIX ---
+        // Set the initial payment status to PENDING so it is not null
+        application.setPaymentStatus(Application.PaymentStatus.PENDING); 
+        
         application.setServiceSpecificData(applicationDTO.getServiceSpecificData());
 
         return applicationRepository.save(application);
     }
 
-    // --- NEW METHOD ---
     @Transactional(readOnly = true)
     public List<ApplicationListItemDTO> getApplicationsByUserEmail(String userEmail) {
         User user = userRepository.findByEmail(userEmail)
@@ -67,13 +71,13 @@ public class ApplicationService {
                 .collect(Collectors.toList());
     }
 
-    // --- NEW HELPER METHOD ---
     private ApplicationListItemDTO mapEntityToListItemDto(Application application) {
         ApplicationListItemDTO dto = new ApplicationListItemDTO();
         dto.setApplicationId(application.getApplicationId());
         dto.setServiceName(application.getService().getServiceName());
         dto.setSubmissionDate(application.getSubmissionDate());
         dto.setStatus(application.getStatus());
+        dto.setPaymentStatus(application.getPaymentStatus());
         return dto;
     }
 }

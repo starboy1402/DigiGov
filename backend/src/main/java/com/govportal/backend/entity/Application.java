@@ -1,5 +1,6 @@
 package com.govportal.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -18,19 +19,19 @@ public class Application {
     @Column(name = "application_id")
     private Long applicationId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-    
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "citizen_profile_id", nullable = false)
     private CitizenProfile citizenProfile;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "service_id", nullable = false)
     private Service service;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "admin_id")
     private Admin admin;
 
@@ -38,8 +39,16 @@ public class Application {
     private LocalDate submissionDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ApplicationStatus status;
+    @Column(name = "status", nullable = false)
+    private ApplicationStatus status = ApplicationStatus.PENDING;;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", nullable = false)
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
+
+    @OneToOne(mappedBy = "application", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    private Payment payment;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "service_specific_data", columnDefinition = "json")
@@ -47,5 +56,9 @@ public class Application {
 
     public enum ApplicationStatus {
         PENDING, APPROVED, REJECTED
+    }
+
+    public enum PaymentStatus {
+        PENDING, COMPLETED
     }
 }

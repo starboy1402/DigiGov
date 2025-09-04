@@ -12,4 +12,5 @@ public class ApplicationListItemDTO {
     private LocalDate submissionDate;
     private Application.ApplicationStatus status;
     // We will add payment status here later when we build the payment feature
+     private Application.PaymentStatus paymentStatus;
 }

@@ -1,12 +1,15 @@
 package com.govportal.backend.controller;
 
 import com.govportal.backend.dto.ApplicationDTO;
+import com.govportal.backend.dto.ApplicationListItemDTO;
 import com.govportal.backend.entity.Application;
 import com.govportal.backend.service.ApplicationService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/applications")
@@ -25,4 +28,13 @@ public class ApplicationController {
         Application newApplication = applicationService.createApplication(applicationDTO, userEmail);
         return ResponseEntity.ok(newApplication);
     }
+
+    // --- NEW METHOD ---
+    @GetMapping("/my-applications")
+    public ResponseEntity<List<ApplicationListItemDTO>> getMyApplications(Authentication principal) {
+        String userEmail = principal.getName();
+        List<ApplicationListItemDTO> applications = applicationService.getApplicationsByUserEmail(userEmail);
+        return ResponseEntity.ok(applications);
+    }
 }
+

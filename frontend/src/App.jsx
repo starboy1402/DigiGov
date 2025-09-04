@@ -114,6 +114,30 @@ const API = {
             throw new Error(errorText || 'Application submission failed');
         }
         return response.json();
+    },
+    getMyApplications: async (token) => {
+        const response = await fetch(`${API_BASE_URL}/api/applications/my-applications`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) {
+            throw new Error('Failed to fetch applications');
+        }
+        return response.json();
+    },
+    submitPayment: async (data, token) => {
+        const response = await fetch(`${API_BASE_URL}/api/payments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || 'Payment submission failed');
+        }
+        return response.json();
     }
 };
 
@@ -121,19 +145,6 @@ const API = {
 // --- MOCK API (For features not yet built in the backend) ---
 const MOCK_API = {
     uploadDocument: async (data) => { console.log("Uploading document:", data); await new Promise(r => setTimeout(r, 500)); return { success: true, documentId: `doc_${Date.now()}` }; },
-    submitPayment: async (data) => {
-        console.log("Submitting payment:", data); await new Promise(r => setTimeout(r, 500));
-        const apps = JSON.parse(localStorage.getItem('applications_user_1') || '[]');
-        const updatedApps = apps.map(app => {
-            if (app.id === data.applicationId) {
-                return { ...app, paymentStatus: 'COMPLETED', status: 'PENDING' }; 
-            }
-            return app;
-        });
-        localStorage.setItem('applications_user_1', JSON.stringify(updatedApps));
-        return { ...data, status: 'COMPLETED' };
-    },
-    getUserApplications: async (userId) => { console.log("Getting user applications for:", userId); await new Promise(r => setTimeout(r, 500)); return JSON.parse(localStorage.getItem(`applications_user_${userId}`) || '[]'); },
     getAllApplications: async () => { console.log("Getting all applications for admin"); await new Promise(r => setTimeout(r, 500)); return JSON.parse(localStorage.getItem('applications_user_1') || '[]'); },
     getApplicationStats: async () => {
         console.log("Getting stats for admin"); await new Promise(r => setTimeout(r, 500));
@@ -507,8 +518,8 @@ const ProfilePage = ({}) => {
                 <Input id="mothersName" label="Mother's Name" value={formData.mothersName} onChange={handleChange} required />
                 <Input id="dateOfBirth" label="Date of Birth" type="date" value={formData.dateOfBirth} onChange={handleChange} required />
                 <Input id="nidNumber" label="NID Number" value={formData.nidNumber} onChange={handleChange} required />
-                <Select id="gender" label="Gender" value={formData.gender} onChange={handleChange} required options={[{ value: 'MALE', label: 'Male' }, { value: 'FEMALE', label: 'Female' }, { value: 'OTHER', label: 'Other' }]} />
-                <Select id="religion" label="Religion" value={formData.religion} onChange={handleChange} required options={[{ value: 'ISLAM', label: 'Islam' }, { value: 'HINDUISM', label: 'Hinduism' }, { value: 'CHRISTIANITY', label: 'Christianity' }, { value: 'BUDDHISM', label: 'Buddhism' }, { value: 'OTHER', label: 'Other' }]} />
+                <Input id="gender" label="Gender" value={formData.gender} onChange={handleChange} required />
+                <Input id="religion" label="Religion" value={formData.religion} onChange={handleChange} required />
                 <Input id="profession" label="Profession" value={formData.profession} onChange={handleChange} required />
                 <div className="md:col-span-2"><Input id="currentAddress" label="Current Address" value={formData.currentAddress} onChange={handleChange} required /></div>
                 <div className="md:col-span-2"><Input id="permanentAddress" label="Permanent Address" value={formData.permanentAddress} onChange={handleChange} required /></div>
@@ -748,14 +759,15 @@ const UserDashboard = () => {
                 if (profile) {
                     localStorage.setItem('profile', JSON.stringify(profile));
                     setHasProfile(true);
-                    const userApps = await MOCK_API.getUserApplications(user.userId);
+                    const userApps = await API.getMyApplications(token);
                     setApplications(userApps);
                 } else {
                     localStorage.removeItem('profile');
                     setHasProfile(false);
                 }
             } catch (error) {
-                console.error("Error fetching profile:", error);
+                console.error("Error fetching data:", error);
+                localStorage.removeItem('profile');
                 setHasProfile(false); 
             } finally {
                 setLoading(false);
@@ -798,7 +810,7 @@ const UserDashboard = () => {
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {applications.map((app) => (
-                                <tr key={app.id} className="hover:bg-gray-50/50 transition-colors">
+                                <tr key={app.applicationId} className="hover:bg-gray-50/50 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap text-md font-medium text-[#4E2A2A]">{app.serviceName}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{app.submissionDate}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-md"><StatusBadge status={app.status} /></td>

@@ -139,6 +139,20 @@ const API = {
         }
         return response.json();
     },
+    uploadDocument: async (formData, token) => {
+        const response = await fetch(`${API_BASE_URL}/api/documents/upload`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData,
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || 'Document upload failed');
+        }
+        return response.text();
+    },
     getAllApplications: async (token) => {
         const response = await fetch(`${API_BASE_URL}/api/admin/applications`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -184,7 +198,6 @@ const API = {
 
 // --- MOCK API (For features not yet built in the backend) ---
 const MOCK_API = {
-    uploadDocument: async (data) => { console.log("Uploading document:", data); await new Promise(r => setTimeout(r, 500)); return { success: true, documentId: `doc_${Date.now()}` }; },
     submitFeedback: async (data) => {
         console.log("Submitting feedback:", data); await new Promise(r => setTimeout(r, 500));
         const newFeedback = { id: Date.now(), submission_date: new Date().toISOString(), status: 'New', ...data, admin_notes: null, updated_at: new Date().toISOString() };
@@ -583,8 +596,28 @@ const ApplicationPage = () => {
         };
 
         try {
-            await API.createApplication(applicationData, token);
-            alert('Application submitted successfully!'); 
+            const newApplication = await API.createApplication(applicationData, token);
+            
+            // Now upload documents
+            const uploadPromises = [];
+            if (documents.NID_COPY) {
+                const formData = new FormData();
+                formData.append('file', documents.NID_COPY);
+                formData.append('applicationId', newApplication.applicationId);
+                formData.append('documentType', 'NID_COPY');
+                uploadPromises.push(API.uploadDocument(formData, token));
+            }
+            if (documents.PASSPORT_PHOTO) {
+                const formData = new FormData();
+                formData.append('file', documents.PASSPORT_PHOTO);
+                formData.append('applicationId', newApplication.applicationId);
+                formData.append('documentType', 'PASSPORT_PHOTO');
+                uploadPromises.push(API.uploadDocument(formData, token));
+            }
+
+            await Promise.all(uploadPromises);
+
+            alert('Application and documents submitted successfully!'); 
             navigate('dashboard');
         } catch (error) { 
             alert(`Failed to submit application: ${error.message}`); 
@@ -713,7 +746,7 @@ const ApplicationPage = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">{renderExtraFields()}</div>
                         </div>
                         <div className="p-6 border rounded-xl bg-gray-50/30 border-gray-200">
-                            <h3 className="font-semibold text-lg mb-4 text-[#4E2A2A]">Document Uploads (Coming Soon)</h3>
+                            <h3 className="font-semibold text-lg mb-4 text-[#4E2A2A]">Document Uploads</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <Input id="NID_COPY" label="NID Copy (PDF, JPG)" type="file" onChange={handleFileChange} />
                                 <Input id="PASSPORT_PHOTO" label="Passport Size Photo (JPG, PNG)" type="file" onChange={handleFileChange} />

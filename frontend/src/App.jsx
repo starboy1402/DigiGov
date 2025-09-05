@@ -153,6 +153,22 @@ const API = {
         }
         return response.text();
     },
+    submitFeedback: async (data, token) => {
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        const response = await fetch(`${API_BASE_URL}/api/feedback`, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || 'Feedback submission failed');
+        }
+        return response.json();
+    },
     getAllApplications: async (token) => {
         const response = await fetch(`${API_BASE_URL}/api/admin/applications`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -198,13 +214,6 @@ const API = {
 
 // --- MOCK API (For features not yet built in the backend) ---
 const MOCK_API = {
-    submitFeedback: async (data) => {
-        console.log("Submitting feedback:", data); await new Promise(r => setTimeout(r, 500));
-        const newFeedback = { id: Date.now(), submission_date: new Date().toISOString(), status: 'New', ...data, admin_notes: null, updated_at: new Date().toISOString() };
-        const existingFeedback = JSON.parse(localStorage.getItem('feedback') || '[]');
-        localStorage.setItem('feedback', JSON.stringify([...existingFeedback, newFeedback]));
-        return { success: true };
-    },
     getFeedback: async () => {
         console.log("Getting all feedback"); await new Promise(r => setTimeout(r, 500));
         return JSON.parse(localStorage.getItem('feedback') || '[]');
@@ -598,7 +607,6 @@ const ApplicationPage = () => {
         try {
             const newApplication = await API.createApplication(applicationData, token);
             
-            // Now upload documents
             const uploadPromises = [];
             if (documents.NID_COPY) {
                 const formData = new FormData();
@@ -923,8 +931,9 @@ const FeedbackPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
+        const token = localStorage.getItem('token'); // Logged in users can submit feedback too
         try {
-            await MOCK_API.submitFeedback(formData);
+            await API.submitFeedback(formData, token);
             alert('Thank you! Your feedback has been submitted successfully.');
             navigate('home');
         } catch (error) {

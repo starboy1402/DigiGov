@@ -138,6 +138,46 @@ const API = {
             throw new Error(errorText || 'Payment submission failed');
         }
         return response.json();
+    },
+    getAllApplications: async (token) => {
+        const response = await fetch(`${API_BASE_URL}/api/admin/applications`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) {
+            throw new Error('Failed to fetch all applications');
+        }
+        return response.json();
+    },
+    getApplicationStats: async (token) => {
+        const response = await fetch(`${API_BASE_URL}/api/admin/stats`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) {
+            throw new Error('Failed to fetch stats');
+        }
+        return response.json();
+    },
+    approveApplication: async (id, token) => {
+        const response = await fetch(`${API_BASE_URL}/api/admin/applications/${id}/approve`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || 'Failed to approve application');
+        }
+        return response.json();
+    },
+    rejectApplication: async (id, token) => {
+        const response = await fetch(`${API_BASE_URL}/api/admin/applications/${id}/reject`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || 'Failed to reject application');
+        }
+        return response.json();
     }
 };
 
@@ -145,26 +185,6 @@ const API = {
 // --- MOCK API (For features not yet built in the backend) ---
 const MOCK_API = {
     uploadDocument: async (data) => { console.log("Uploading document:", data); await new Promise(r => setTimeout(r, 500)); return { success: true, documentId: `doc_${Date.now()}` }; },
-    getAllApplications: async () => { console.log("Getting all applications for admin"); await new Promise(r => setTimeout(r, 500)); return JSON.parse(localStorage.getItem('applications_user_1') || '[]'); },
-    getApplicationStats: async () => {
-        console.log("Getting stats for admin"); await new Promise(r => setTimeout(r, 500));
-        const apps = await MOCK_API.getAllApplications();
-        return { total: apps.length, approved: apps.filter(a => a.status === 'APPROVED').length, rejected: apps.filter(a => a.status === 'REJECTED').length, pending: apps.filter(a => a.status === 'PENDING').length };
-    },
-    approveApplication: async (id) => {
-        console.log("Approving application:", id); await new Promise(r => setTimeout(r, 500));
-        const apps = await MOCK_API.getAllApplications();
-        const updatedApps = apps.map(app => app.id === id ? { ...app, status: 'APPROVED' } : app);
-        localStorage.setItem('applications_user_1', JSON.stringify(updatedApps));
-        return { success: true };
-    },
-    rejectApplication: async (id) => {
-        console.log("Rejecting application:", id); await new Promise(r => setTimeout(r, 500));
-        const apps = await MOCK_API.getAllApplications();
-        const updatedApps = apps.map(app => app.id === id ? { ...app, status: 'REJECTED' } : app);
-        localStorage.setItem('applications_user_1', JSON.stringify(updatedApps));
-        return { success: true };
-    },
     submitFeedback: async (data) => {
         console.log("Submitting feedback:", data); await new Promise(r => setTimeout(r, 500));
         const newFeedback = { id: Date.now(), submission_date: new Date().toISOString(), status: 'New', ...data, admin_notes: null, updated_at: new Date().toISOString() };
@@ -518,8 +538,8 @@ const ProfilePage = ({}) => {
                 <Input id="mothersName" label="Mother's Name" value={formData.mothersName} onChange={handleChange} required />
                 <Input id="dateOfBirth" label="Date of Birth" type="date" value={formData.dateOfBirth} onChange={handleChange} required />
                 <Input id="nidNumber" label="NID Number" value={formData.nidNumber} onChange={handleChange} required />
-                <Input id="gender" label="Gender" value={formData.gender} onChange={handleChange} required />
-                <Input id="religion" label="Religion" value={formData.religion} onChange={handleChange} required />
+                <Select id="gender" label="Gender" value={formData.gender} onChange={handleChange} required options={[{ value: 'MALE', label: 'Male' }, { value: 'FEMALE', label: 'Female' }, { value: 'OTHER', label: 'Other' }]} />
+                <Select id="religion" label="Religion" value={formData.religion} onChange={handleChange} required options={[{ value: 'ISLAM', label: 'Islam' }, { value: 'HINDUISM', label: 'Hinduism' }, { value: 'CHRISTIANITY', label: 'Christianity' }, { value: 'BUDDHISM', label: 'Buddhism' }, { value: 'OTHER', label: 'Other' }]} />
                 <Input id="profession" label="Profession" value={formData.profession} onChange={handleChange} required />
                 <div className="md:col-span-2"><Input id="currentAddress" label="Current Address" value={formData.currentAddress} onChange={handleChange} required /></div>
                 <div className="md:col-span-2"><Input id="permanentAddress" label="Permanent Address" value={formData.permanentAddress} onChange={handleChange} required /></div>
@@ -904,9 +924,12 @@ const FeedbackPage = () => {
 
 
 const ServiceAnalyticsChart = ({ data }) => {
-    const { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } = window.Recharts;
+    const { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } = window.Recharts || {};
+    if (!PieChart) {
+        return <div className="flex items-center justify-center h-full">Loading Chart...</div>
+    }
+    
     const COLORS = ['#E97451', '#4E2A2A', '#F4A261', '#2A9D8F', '#264653', '#E76F51'];
-    if (!PieChart) return <div>Loading Chart...</div>;
 
     return (
         <div style={{ width: '100%', height: 300 }}>
@@ -937,11 +960,14 @@ const AdminDashboard = () => {
 
     const fetchData = async () => { 
         setLoading(true); 
+        const token = localStorage.getItem('token');
+        if (!token) { setLoading(false); return; }
+
         try { 
             const [statsData, appsData, feedbackData] = await Promise.all([
-                MOCK_API.getApplicationStats(), 
-                MOCK_API.getAllApplications(),
-                MOCK_API.getFeedback()
+                API.getApplicationStats(token), 
+                API.getAllApplications(token),
+                MOCK_API.getFeedback() // This is still mocked
             ]); 
             setStats(statsData); 
             setApplications(appsData); 
@@ -974,8 +1000,24 @@ const AdminDashboard = () => {
         setFilteredApps(tempApps);
     }, [filter, searchTerm, applications]);
 
-    const handleApprove = async (id) => { await MOCK_API.approveApplication(id); fetchData(); };
-    const handleReject = async (id) => { await MOCK_API.rejectApplication(id); fetchData(); };
+    const handleApprove = async (id) => { 
+        const token = localStorage.getItem('token');
+        try {
+            await API.approveApplication(id, token);
+            fetchData();
+        } catch (error) {
+            alert(`Error: ${error.message}`);
+        }
+    };
+    const handleReject = async (id) => { 
+        const token = localStorage.getItem('token');
+        try {
+            await API.rejectApplication(id, token);
+            fetchData();
+        } catch (error) {
+            alert(`Error: ${error.message}`);
+        }
+    };
     const handleFeedbackStatusChange = async (feedbackId, newStatus) => {
         await MOCK_API.updateFeedbackStatus(feedbackId, newStatus);
         fetchData();
@@ -1005,8 +1047,8 @@ const AdminDashboard = () => {
                     </div>
                     <div className="flex space-x-2">{['ALL', 'PENDING', 'APPROVED', 'REJECTED'].map(f => (<Button key={f} onClick={() => setFilter(f)} variant={filter === f ? 'primary' : 'secondary'} className="w-auto px-4 py-2 text-xs">{f}</Button>))}</div>
                 </div>
-                 <div className="overflow-x-auto -mx-6 md:-mx-8"><table className="min-w-full"><thead className="border-b-2 border-gray-200"><tr><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">User ID</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Service</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Date</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">App Status</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Payment</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Actions</th></tr></thead><tbody className="divide-y divide-gray-100">
-                    {filteredApps.map(app => (<tr key={app.id} className="hover:bg-gray-50/50 transition-colors"><td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{app.userId}</td><td className="px-6 py-4 whitespace-nowrap text-md font-medium text-[#4E2A2A]">{app.serviceName}</td><td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{app.submissionDate}</td><td className="px-6 py-4 whitespace-nowrap text-md"><StatusBadge status={app.status} /></td><td className="px-6 py-4 whitespace-nowrap text-md"><StatusBadge status={app.paymentStatus} /></td><td className="px-6 py-4 whitespace-nowrap text-md font-medium space-x-2">{app.status === 'PENDING' && app.paymentStatus === 'COMPLETED' ? (<><Button onClick={() => handleApprove(app.id)} variant="success" className="w-auto px-3 py-1 text-xs">Approve</Button><Button onClick={() => handleReject(app.id)} variant="danger" className="w-auto px-3 py-1 text-xs">Reject</Button></>) : app.paymentStatus === 'PENDING' ? (<span className="text-xs text-gray-400">Awaiting Payment</span>) : <span className="text-gray-400">--</span>}</td></tr>))}
+                 <div className="overflow-x-auto -mx-6 md:-mx-8"><table className="min-w-full"><thead className="border-b-2 border-gray-200"><tr><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">User ID</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Application ID</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Service</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Date</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">App Status</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Payment</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Actions</th></tr></thead><tbody className="divide-y divide-gray-100">
+                    {filteredApps.map(app => (<tr key={app.applicationId} className="hover:bg-gray-50/50 transition-colors"><td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{app.userId}</td><td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{app.applicationId}</td><td className="px-6 py-4 whitespace-nowrap text-md font-medium text-[#4E2A2A]">{app.serviceName}</td><td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{app.submissionDate}</td><td className="px-6 py-4 whitespace-nowrap text-md"><StatusBadge status={app.status} /></td><td className="px-6 py-4 whitespace-nowrap text-md"><StatusBadge status={app.paymentStatus} /></td><td className="px-6 py-4 whitespace-nowrap text-md font-medium space-x-2">{app.status === 'PENDING' && app.paymentStatus === 'COMPLETED' ? (<><Button onClick={() => handleApprove(app.applicationId)} variant="success" className="w-auto px-3 py-1 text-xs">Approve</Button><Button onClick={() => handleReject(app.applicationId)} variant="danger" className="w-auto px-3 py-1 text-xs">Reject</Button></>) : app.paymentStatus === 'PENDING' ? (<span className="text-xs text-gray-400">Awaiting Payment</span>) : <span className="text-gray-400">--</span>}</td></tr>))}
                 </tbody></table></div>
             </AnimatedCard>
              <AnimatedCard delay={600}>

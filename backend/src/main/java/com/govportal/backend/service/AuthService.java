@@ -11,6 +11,7 @@ import com.govportal.backend.repository.UserRepository;
 import com.govportal.backend.security.JwtTokenProvider;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -54,13 +55,13 @@ public class AuthService {
 
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", user.getId());
-        claims.put("role", "ROLE_USER");
+        claims.put("roles", List.of("ROLE_USER")); // Put role in a list
         String token = jwtTokenProvider.generateToken(user.getEmail(), claims);
         return AuthResponseDTO.builder()
-            .token(token)
-            .userId(user.getId())
-            .email(user.getEmail())
-            .build();
+                .token(token)
+                .userId(user.getId())
+                .email(user.getEmail())
+                .build();
     }
 
     public AuthResponseDTO adminLogin(AdminLoginDTO adminLoginDTO) {
@@ -73,13 +74,13 @@ public class AuthService {
 
         Map<String, Object> claims = new HashMap<>();
         claims.put("adminId", admin.getId());
-        claims.put("role", "ROLE_ADMIN");
+        claims.put("roles", List.of("ROLE_ADMIN")); // Put role in a list
         String token = jwtTokenProvider.generateToken(admin.getUsername(), claims);
         return AuthResponseDTO.builder()
-            .token(token)
-            .adminId(admin.getId())
-            .username(admin.getUsername())
-            .build();
+                .token(token)
+                .adminId(admin.getId())
+                .username(admin.getUsername())
+                .build();
     }
 }
 

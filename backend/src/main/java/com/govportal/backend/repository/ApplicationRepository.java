@@ -9,7 +9,9 @@ import java.util.List;
 
 @Repository
 public interface ApplicationRepository extends JpaRepository<Application, Long> {
-    // This new method will find all applications associated with a specific user object
+    
     List<Application> findAllByUser(User user);
+
+    long countByStatus(Application.ApplicationStatus status);
 }
 

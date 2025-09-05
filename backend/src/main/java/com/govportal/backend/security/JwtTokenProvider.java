@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -45,14 +46,17 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    // --- NEW METHOD ---
-    // Extracts the username (email) from the token
     public String getUsernameFromJWT(String token) {
         return getClaimFromToken(token, Claims::getSubject);
     }
 
     // --- NEW METHOD ---
-    // Validates the token's signature and expiration
+    // Extracts the roles from the token
+    @SuppressWarnings("unchecked")
+    public List<String> getRolesFromJWT(String token) {
+        return getClaimFromToken(token, claims -> (List<String>) claims.get("roles"));
+    }
+
     public boolean validateToken(String authToken) {
         try {
             Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(authToken);
@@ -69,7 +73,6 @@ public class JwtTokenProvider {
         return false;
     }
 
-    // --- NEW HELPER METHODS ---
     private <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = getAllClaimsFromToken(token);
         return claimsResolver.apply(claims);

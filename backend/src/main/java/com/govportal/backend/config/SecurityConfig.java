@@ -3,6 +3,7 @@ package com.govportal.backend.config;
 import com.govportal.backend.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -44,7 +45,11 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/api/admin/login").permitAll()
                 .requestMatchers("/api/citizen-profiles/**").authenticated()
-                .requestMatchers("/api/applications/**").authenticated() // Secure the new endpoint
+                .requestMatchers("/api/applications/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/feedback").permitAll() // Allow feedback submission
+                .requestMatchers(HttpMethod.GET, "/api/feedback").hasRole("ADMIN") // Only admins can view all feedback
+                .requestMatchers(HttpMethod.PUT, "/api/feedback/**").hasRole("ADMIN") // Only admins can update feedback
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

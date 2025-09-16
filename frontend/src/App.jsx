@@ -222,10 +222,10 @@ const MOCK_API = {
         console.log(`Updating feedback ${feedbackId} to ${newStatus}`);
         await new Promise(r => setTimeout(r, 500));
         const feedback = JSON.parse(localStorage.getItem('feedback') || '[]');
-        const updatedFeedback = feedback.map(item => 
-            item.id === feedbackId 
-            ? { ...item, status: newStatus, updated_at: new Date().toISOString() } 
-            : item
+        const updatedFeedback = feedback.map(item =>
+            item.id === feedbackId
+                ? { ...item, status: newStatus, updated_at: new Date().toISOString() }
+                : item
         );
         localStorage.setItem('feedback', JSON.stringify(updatedFeedback));
         return { success: true };
@@ -233,11 +233,11 @@ const MOCK_API = {
 };
 
 const SERVICES = [
-    { id: 1, name: "Characteristic Certificate" }, 
+    { id: 1, name: "Characteristic Certificate" },
     { id: 2, name: "Marriage Certificate" },
-    { id: 3, name: "Disability Certificate" }, 
+    { id: 3, name: "Disability Certificate" },
     { id: 4, name: "Death Certificate" },
-    { id: 5, name: "Citizen Certificate" }, 
+    { id: 5, name: "Citizen Certificate" },
     { id: 6, name: "Holding Tax Payment" },
     { id: 7, name: "National Health Card" },
     { id: 8, name: "Birth Certificate" },
@@ -326,7 +326,7 @@ const Select = ({ id, label, value, onChange, options, required = false, classNa
             {label}
         </label>
         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
         </div>
     </div>
 );
@@ -334,7 +334,7 @@ const Select = ({ id, label, value, onChange, options, required = false, classNa
 
 const Spinner = () => <div className="flex justify-center items-center h-full"><div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[#E97451]"></div></div>;
 
-const Header = ({}) => {
+const Header = ({ }) => {
     const { isAuthenticated, user, logout, isAdmin } = useAuth();
     const { navigate } = useApp();
     const headerRef = useAnime((el, anime) => { anime({ targets: el, translateY: [-100, 0], opacity: [0, 1], duration: 1000, easing: 'easeOutExpo' }); });
@@ -346,8 +346,8 @@ const Header = ({}) => {
                 </div>
                 <div className="flex items-center space-x-2 md:space-x-4">
                     {!isAdmin && (
-                        <button 
-                            onClick={() => navigate('feedback')} 
+                        <button
+                            onClick={() => navigate('feedback')}
                             className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[#4E2A2A] bg-gray-200/50 rounded-full hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E97451] transform hover:scale-105 duration-300"
                         >
                             <MessageSquare size={16} />
@@ -361,8 +361,8 @@ const Header = ({}) => {
                         </>
                     ) : (
                         <>
-                           <Button onClick={() => navigate('login')} variant="secondary" className="w-auto px-4 py-2 text-sm">Login</Button>
-                           <Button onClick={() => navigate('signup')} variant="primary" className="w-auto px-4 py-2 text-sm">Sign Up</Button>
+                            <Button onClick={() => navigate('login')} variant="secondary" className="w-auto px-4 py-2 text-sm">Login</Button>
+                            <Button onClick={() => navigate('signup')} variant="primary" className="w-auto px-4 py-2 text-sm">Sign Up</Button>
                         </>
                     )}
                 </div>
@@ -415,7 +415,7 @@ const HomePage = () => {
                 </p>
                 <div className="mt-8">
                     <Button onClick={() => document.getElementById('services').scrollIntoView({ behavior: 'smooth' })} className="inline-flex w-auto px-8 py-4 text-lg">
-                        Explore Services <ArrowRight className="ml-2"/>
+                        Explore Services <ArrowRight className="ml-2" />
                     </Button>
                 </div>
             </div>
@@ -438,7 +438,7 @@ const HomePage = () => {
                     })}
                 </div>
             </div>
-             <div className="text-center pb-16 relative z-10">
+            <div className="text-center pb-16 relative z-10">
                 <Button onClick={() => navigate('adminLogin')} variant="secondary" className="inline-flex items-center w-auto px-6 py-3">
                     <Shield className="w-5 h-5 mr-2" />
                     Admin Panel
@@ -456,11 +456,11 @@ const AuthForm = ({ isLogin, isAdminLogin }) => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const handleChange = (e) => { const { id, value } = e.target; if (isAdminLogin) setAdminFormData(p => ({ ...p, [id]: value })); else setFormData(p => ({ ...p, [id]: value })); };
-    
+
     const handleSubmit = async (e) => {
         e.preventDefault(); setError(''); setLoading(true);
         try {
-            if (isAdminLogin) { 
+            if (isAdminLogin) {
                 const response = await API.adminLogin(adminFormData);
                 const userData = { adminId: response.adminId, username: response.username };
                 login(userData, response.token, 'admin');
@@ -481,12 +481,12 @@ const AuthForm = ({ isLogin, isAdminLogin }) => {
             setLoading(false);
         }
     };
-    
+
     const title = isAdminLogin ? "Admin Login" : (isLogin ? "Login" : "Sign Up");
     const buttonText = loading ? "Processing..." : (isLogin ? "Login" : "Sign Up");
     const switchLinkText = isLogin ? "Don't have an account? Sign Up" : "Already have an account? Login";
     const switchLinkTarget = isLogin ? 'signup' : 'login';
-    
+
     return (
         <div className="min-h-[calc(100vh-200px)] flex items-center justify-center">
             <AnimatedCard className="w-full max-w-md">
@@ -502,14 +502,14 @@ const AuthForm = ({ isLogin, isAdminLogin }) => {
     );
 };
 
-const ProfilePage = ({}) => {
+const ProfilePage = ({ }) => {
     const { user } = useAuth();
     const { navigate } = useApp();
     const [formData, setFormData] = useState({ name: '', fathersName: '', mothersName: '', dateOfBirth: '', nidNumber: '', gender: '', religion: '', currentAddress: '', permanentAddress: '', profession: '' });
     const [loading, setLoading] = useState(false);
     const [isUpdate, setIsUpdate] = useState(false);
 
-    useEffect(() => { 
+    useEffect(() => {
         const profileData = JSON.parse(localStorage.getItem('profile'));
         if (profileData) {
             const formattedProfile = {
@@ -522,9 +522,9 @@ const ProfilePage = ({}) => {
     }, []);
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.id]: e.target.value });
-    
+
     const handleSubmit = async (e) => {
-        e.preventDefault(); 
+        e.preventDefault();
         setLoading(true);
         const token = localStorage.getItem('token');
         if (!token) {
@@ -534,18 +534,18 @@ const ProfilePage = ({}) => {
             return;
         }
 
-        try { 
+        try {
             const apiCall = isUpdate ? API.updateProfile : API.createProfile;
-            const profileData = await apiCall(formData, token); 
-            localStorage.setItem('profile', JSON.stringify(profileData)); 
-            alert(`Profile ${isUpdate ? 'updated' : 'created'} successfully!`); 
-            navigate('dashboard'); 
+            const profileData = await apiCall(formData, token);
+            localStorage.setItem('profile', JSON.stringify(profileData));
+            alert(`Profile ${isUpdate ? 'updated' : 'created'} successfully!`);
+            navigate('dashboard');
         }
-        catch (error) { 
-            alert(`Failed to save profile: ${error.message}`); 
+        catch (error) {
+            alert(`Failed to save profile: ${error.message}`);
         }
-        finally { 
-            setLoading(false); 
+        finally {
+            setLoading(false);
         }
     };
 
@@ -577,7 +577,7 @@ const ApplicationPage = () => {
     const [extraFields, setExtraFields] = useState({});
     const [documents, setDocuments] = useState({ NID_COPY: null, PASSPORT_PHOTO: null });
     const [loading, setLoading] = useState(false);
-    
+
     const serviceId = currentApplication?.serviceId;
 
     useEffect(() => {
@@ -587,9 +587,9 @@ const ApplicationPage = () => {
     const serviceName = getServiceName(serviceId);
     const handleExtraChange = (e) => setExtraFields({ ...extraFields, [e.target.id]: e.target.value });
     const handleFileChange = (e) => setDocuments({ ...documents, [e.target.id]: e.target.files[0] });
-    
+
     const handleSubmit = async (e) => {
-        e.preventDefault(); 
+        e.preventDefault();
         setLoading(true);
         const token = localStorage.getItem('token');
         if (!token) {
@@ -606,7 +606,7 @@ const ApplicationPage = () => {
 
         try {
             const newApplication = await API.createApplication(applicationData, token);
-            
+
             const uploadPromises = [];
             if (documents.NID_COPY) {
                 const formData = new FormData();
@@ -625,12 +625,12 @@ const ApplicationPage = () => {
 
             await Promise.all(uploadPromises);
 
-            alert('Application and documents submitted successfully!'); 
+            alert('Application and documents submitted successfully!');
             navigate('dashboard');
-        } catch (error) { 
-            alert(`Failed to submit application: ${error.message}`); 
-        } finally { 
-            setLoading(false); 
+        } catch (error) {
+            alert(`Failed to submit application: ${error.message}`);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -661,8 +661,8 @@ const ApplicationPage = () => {
                 </>;
             case 3: // Disability Certificate
                 return <>
-                    <Select id="disabilityType" label="Type of Disability" value={extraFields.disabilityType || ''} onChange={handleExtraChange} required 
-                        options={[{ value: 'PHYSICAL', label: 'Physical' }, { value: 'VISUAL', label: 'Visual' }, { value: 'HEARING', label: 'Hearing' }, { value: 'SPEECH', label: 'Speech' }, { value: 'INTELLECTUAL', label: 'Intellectual' }]} 
+                    <Select id="disabilityType" label="Type of Disability" value={extraFields.disabilityType || ''} onChange={handleExtraChange} required
+                        options={[{ value: 'PHYSICAL', label: 'Physical' }, { value: 'VISUAL', label: 'Visual' }, { value: 'HEARING', label: 'Hearing' }, { value: 'SPEECH', label: 'Speech' }, { value: 'INTELLECTUAL', label: 'Intellectual' }]}
                     />
                     <Input id="medicalReportNo" label="Medical Report Reference No." value={extraFields.medicalReportNo || ''} onChange={handleExtraChange} required />
                     <div className="md:col-span-2">
@@ -688,13 +688,13 @@ const ApplicationPage = () => {
                     <Input id="holdingNumber" label="Holding Number" value={extraFields.holdingNumber || ''} onChange={handleExtraChange} required />
                     <Input id="wardNumber" label="Ward Number" type="number" value={extraFields.wardNumber || ''} onChange={handleExtraChange} required />
                     <Input id="assessmentYear" label="Assessment Year" value={extraFields.assessmentYear || ''} onChange={handleExtraChange} required placeholder="e.g., 2024-2025" />
-                     <Select id="paymentPeriod" label="Payment Period" value={extraFields.paymentPeriod || ''} onChange={handleExtraChange} required 
-                        options={[{ value: 'Q1', label: 'Q1 (July - September)' }, { value: 'Q2', label: 'Q2 (October - December)' }, { value: 'Q3', label: 'Q3 (January - March)' }, { value: 'Q4', label: 'Q4 (April - June)' }]} 
+                    <Select id="paymentPeriod" label="Payment Period" value={extraFields.paymentPeriod || ''} onChange={handleExtraChange} required
+                        options={[{ value: 'Q1', label: 'Q1 (July - September)' }, { value: 'Q2', label: 'Q2 (October - December)' }, { value: 'Q3', label: 'Q3 (January - March)' }, { value: 'Q4', label: 'Q4 (April - June)' }]}
                     />
                 </>;
             case 7: // National Health Card
                 return <>
-                    <Select id="bloodGroup" label="Blood Group" value={extraFields.bloodGroup || ''} onChange={handleExtraChange} required options={['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => ({value: bg, label: bg}))}/>
+                    <Select id="bloodGroup" label="Blood Group" value={extraFields.bloodGroup || ''} onChange={handleExtraChange} required options={['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => ({ value: bg, label: bg }))} />
                     <Input id="emergencyContactName" label="Emergency Contact Name" value={extraFields.emergencyContactName || ''} onChange={handleExtraChange} required />
                     <Input id="emergencyContactPhone" label="Emergency Contact Phone" type="tel" value={extraFields.emergencyContactPhone || ''} onChange={handleExtraChange} required />
                     <div className="md:col-span-2"><Textarea id="preExistingConditions" label="Pre-existing Conditions (optional)" value={extraFields.preExistingConditions || ''} onChange={handleExtraChange} /></div>
@@ -716,10 +716,10 @@ const ApplicationPage = () => {
                     <Input id="landLocation" label="Land Location (Mouza, Khatian, Dag No.)" value={extraFields.landLocation || ''} onChange={handleExtraChange} required />
                     <Input id="landArea" label="Area of Land (in decimals)" type="number" value={extraFields.landArea || ''} onChange={handleExtraChange} required />
                 </>;
-             case 10: // E-Tax Filing
+            case 10: // E-Tax Filing
                 return <>
                     <Input id="tinNumber" label="Taxpayer's Identification Number (TIN)" value={extraFields.tinNumber || ''} onChange={handleExtraChange} required />
-                    <Input id="assessmentYear" label="Assessment Year" value={extraFields.assessmentYear || ''} onChange={handleExtraChange} required placeholder="e.g., 2024-2025"/>
+                    <Input id="assessmentYear" label="Assessment Year" value={extraFields.assessmentYear || ''} onChange={handleExtraChange} required placeholder="e.g., 2024-2025" />
                     <Input id="taxableIncome" label="Total Taxable Income" type="number" value={extraFields.taxableIncome || ''} onChange={handleExtraChange} required />
                     <Input id="taxPaid" label="Total Tax Paid" type="number" value={extraFields.taxPaid || ''} onChange={handleExtraChange} required />
                     <Input id="paymentChallanNo" label="Payment Challan No." value={extraFields.paymentChallanNo || ''} onChange={handleExtraChange} />
@@ -742,10 +742,10 @@ const ApplicationPage = () => {
                     options={SERVICES.map(s => ({ value: s.id, label: s.name }))}
                 />
             </div>
-            
+
             <h2 className="text-3xl font-bold text-[#4E2A2A] mb-2">Application for {serviceName || '...'}</h2>
             <p className="text-[#4E2A2A]/80 mb-8">Please fill out the required details below.</p>
-            
+
             <form onSubmit={handleSubmit} className="space-y-8">
                 {serviceId ? (
                     <>
@@ -772,13 +772,13 @@ const PaymentPage = () => {
     const { navigate, currentApplication } = useApp();
     const [formData, setFormData] = useState({ applicationId: currentApplication?.applicationId, amount: 200.00, paymentMethod: 'BKASH', transactionId: '' });
     const [loading, setLoading] = useState(false);
-    
+
     if (!currentApplication) return (<AnimatedCard className="text-center"><p>No application selected for payment.</p><Button onClick={() => navigate('dashboard')} className="mt-4 w-auto">Go to Dashboard</Button></AnimatedCard>);
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.id]: e.target.value });
-    
+
     const handleSubmit = async (e) => {
-        e.preventDefault(); 
+        e.preventDefault();
         setLoading(true);
         const token = localStorage.getItem('token');
         if (!token) {
@@ -788,16 +788,16 @@ const PaymentPage = () => {
             return;
         }
 
-        try { 
-            await API.submitPayment(formData, token); 
-            alert('Payment information submitted successfully!'); 
-            navigate('dashboard'); 
+        try {
+            await API.submitPayment(formData, token);
+            alert('Payment information submitted successfully!');
+            navigate('dashboard');
         }
-        catch (error) { 
-            alert(`Failed to submit payment: ${error.message}`); 
+        catch (error) {
+            alert(`Failed to submit payment: ${error.message}`);
         }
-        finally { 
-            setLoading(false); 
+        finally {
+            setLoading(false);
         }
     };
 
@@ -851,7 +851,7 @@ const UserDashboard = () => {
                 console.error("Error fetching data:", error);
                 // Clear potentially stale profile data on error
                 localStorage.removeItem('profile');
-                setHasProfile(false); 
+                setHasProfile(false);
             } finally {
                 setLoading(false);
             }
@@ -860,17 +860,86 @@ const UserDashboard = () => {
         checkProfileAndFetchApps();
     }, [user, navigate, logout, route]);
 
+    // download handler: builds a formatted text document and triggers a file download
+    const handleDownload = (app) => {
+        try {
+            const profile = JSON.parse(localStorage.getItem('profile') || '{}');
 
+            const fmtISO = (d) => {
+                if (!d) return '';
+                const date = new Date(d);
+                if (isNaN(date.getTime())) return String(d);
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${y}-${m}-${day}`;
+            };
+
+            const lines = [];
+            lines.push('GOVERNMENT SERVICE PORTAL - APPLICATION FORM');
+            lines.push('=============================================');
+            lines.push('');
+            lines.push(`SERVICE: ${app.serviceName || getServiceName(app.serviceId) || 'Unknown Service'}`);
+            lines.push(`APPLICATION ID: ${app.applicationId || ''}`);
+            lines.push(`SUBMISSION DATE: ${fmtISO(app.submissionDate)}`);
+            lines.push(`STATUS: ${app.status || ''}`);
+            lines.push('');
+            lines.push('APPLICANT DETAILS');
+            lines.push('-----------------');
+            lines.push(`Name: ${profile.name || app.applicantName || ''}`);
+            lines.push(`Father's Name: ${profile.fathersName || app.fathersName || ''}`);
+            lines.push(`Mother's Name: ${profile.mothersName || app.mothersName || ''}`);
+            lines.push(`Date of Birth: ${fmtISO(profile.dateOfBirth || app.dateOfBirth)}`);
+            lines.push(`NID Number: ${profile.nidNumber || app.nidNumber || ''}`);
+            lines.push(`Profession: ${profile.profession || app.profession || ''}`);
+            lines.push('');
+            lines.push('SERVICE SPECIFIC DETAILS');
+            lines.push('------------------------');
+
+            const serviceData = app.serviceSpecificData || app.serviceSpecific || {};
+            const prettyKey = (k) => String(k).replace(/([A-Z])/g, ' $1').replace(/[_\-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+            if (serviceData && Object.keys(serviceData).length > 0) {
+                Object.entries(serviceData).forEach(([k, v]) => {
+                    lines.push(`${prettyKey(k)}: ${v}`);
+                });
+            } else if (app.purpose) {
+                lines.push(`Purpose: ${app.purpose}`);
+                if (app.referencePerson) lines.push(`Reference Person: ${app.referencePerson}`);
+            } else {
+                lines.push('No service specific data available.');
+            }
+
+            lines.push('');
+            lines.push('---------------------------------------------');
+            lines.push('This is a system-generated document.');
+            lines.push(`Downloaded on: ${new Date().toLocaleString()}`);
+
+            const content = lines.join('\n');
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `application-${app.applicationId || Date.now()}.txt`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Download error', err);
+            alert('Failed to generate download. See console for details.');
+        }
+    };
     if (loading) return (<div className="flex justify-center items-center h-64"><Spinner /></div>);
     if (!user) return null;
     if (!hasProfile) return (<AnimatedCard className="text-center max-w-lg mx-auto"><h2 className="text-2xl font-bold mb-4 text-[#4E2A2A]">Welcome!</h2><p className="text-[#4E2A2A]/80 mb-6">Create a citizen profile to apply for services.</p><Button onClick={() => navigate('profile')}>Create Profile</Button></AnimatedCard>);
-    
+
     return (
         <AnimatedCard className="max-w-6xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                 <div>
                     <h2 className="text-4xl font-bold text-[#4E2A2A]">My Applications</h2>
-                    {hasProfile && <button onClick={() => navigate('profile')} className="flex items-center gap-2 text-sm text-[#c15c41] hover:text-[#E97451] mt-2"><Edit size={14}/> Update Profile</button>}
+                    {hasProfile && <button onClick={() => navigate('profile')} className="flex items-center gap-2 text-sm text-[#c15c41] hover:text-[#E97451] mt-2"><Edit size={14} /> Update Profile</button>}
                 </div>
                 <Button onClick={() => navigate('home')} className="w-full md:w-auto">Apply for New Service</Button>
             </div>
@@ -900,8 +969,8 @@ const UserDashboard = () => {
                                     <td className="px-6 py-4 whitespace-nowrap text-md"><StatusBadge status={app.paymentStatus} /></td>
                                     <td className="px-6 py-4 whitespace-nowrap text-md font-medium">
                                         {app.status === 'APPROVED' ? (
-                                            <Button variant="primary" className="w-auto px-4 py-2 text-xs">
-                                                <Download size={14} className="mr-1"/> Download
+                                            <Button onClick={() => handleDownload(app)} variant="primary" className="w-auto px-4 py-2 text-xs">
+                                                <Download size={14} className="mr-1" /> Download
                                             </Button>
                                         ) : app.paymentStatus === 'PENDING' ? (
                                             <Button onClick={() => navigate('payment', app)} variant="success" className="w-auto px-4 py-2 text-xs">
@@ -970,7 +1039,7 @@ const ServiceAnalyticsChart = ({ data }) => {
     if (!PieChart) {
         return <div className="flex items-center justify-center h-full">Loading Chart...</div>
     }
-    
+
     const COLORS = ['#E97451', '#4E2A2A', '#F4A261', '#2A9D8F', '#264653', '#E76F51'];
 
     return (
@@ -1000,38 +1069,38 @@ const AdminDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [chartData, setChartData] = useState([]);
 
-    const fetchData = async () => { 
-        setLoading(true); 
+    const fetchData = async () => {
+        setLoading(true);
         const token = localStorage.getItem('token');
         if (!token) { setLoading(false); return; }
 
-        try { 
+        try {
             const [statsData, appsData, feedbackData] = await Promise.all([
-                API.getApplicationStats(token), 
+                API.getApplicationStats(token),
                 API.getAllApplications(token),
                 MOCK_API.getFeedback() // This is still mocked
-            ]); 
-            setStats(statsData); 
-            setApplications(appsData); 
-            setFilteredApps(appsData); 
+            ]);
+            setStats(statsData);
+            setApplications(appsData);
+            setFilteredApps(appsData);
             setFeedback(feedbackData);
-            
+
             const serviceCounts = appsData.reduce((acc, app) => {
                 acc[app.serviceName] = (acc[app.serviceName] || 0) + 1;
                 return acc;
             }, {});
             setChartData(Object.entries(serviceCounts).map(([name, value]) => ({ name, value })));
 
-        } catch (error) { 
-            console.error("Failed to fetch admin data", error); 
-        } finally { 
-            setLoading(false); 
-        } 
+        } catch (error) {
+            console.error("Failed to fetch admin data", error);
+        } finally {
+            setLoading(false);
+        }
     };
-    
+
     useEffect(() => { fetchData(); }, []);
-    
-    useEffect(() => { 
+
+    useEffect(() => {
         let tempApps = applications;
         if (filter !== 'ALL') {
             tempApps = tempApps.filter(app => app.status === filter);
@@ -1042,7 +1111,7 @@ const AdminDashboard = () => {
         setFilteredApps(tempApps);
     }, [filter, searchTerm, applications]);
 
-    const handleApprove = async (id) => { 
+    const handleApprove = async (id) => {
         const token = localStorage.getItem('token');
         try {
             await API.approveApplication(id, token);
@@ -1051,7 +1120,7 @@ const AdminDashboard = () => {
             alert(`Error: ${error.message}`);
         }
     };
-    const handleReject = async (id) => { 
+    const handleReject = async (id) => {
         const token = localStorage.getItem('token');
         try {
             await API.rejectApplication(id, token);
@@ -1072,40 +1141,40 @@ const AdminDashboard = () => {
         <div className="space-y-12">
             <h2 className="text-5xl font-bold text-[#4E2A2A]">Admin Dashboard</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <StatCard title="Total Applications" value={stats.total} icon={<FileText className="h-10 w-10 text-[#E97451]"/>} color="border-[#E97451]" delay={0} />
-                <StatCard title="Pending" value={stats.pending} icon={<Clock className="h-10 w-10 text-yellow-500"/>} color="border-yellow-500" delay={100} />
-                <StatCard title="Approved" value={stats.approved} icon={<CheckCircle className="h-10 w-10 text-green-500"/>} color="border-green-500" delay={200} />
-                <StatCard title="Rejected" value={stats.rejected} icon={<XCircle className="h-10 w-10 text-red-500"/>} color="border-red-500" delay={300} />
+                <StatCard title="Total Applications" value={stats.total} icon={<FileText className="h-10 w-10 text-[#E97451]" />} color="border-[#E97451]" delay={0} />
+                <StatCard title="Pending" value={stats.pending} icon={<Clock className="h-10 w-10 text-yellow-500" />} color="border-yellow-500" delay={100} />
+                <StatCard title="Approved" value={stats.approved} icon={<CheckCircle className="h-10 w-10 text-green-500" />} color="border-green-500" delay={200} />
+                <StatCard title="Rejected" value={stats.rejected} icon={<XCircle className="h-10 w-10 text-red-500" />} color="border-red-500" delay={300} />
             </div>
-             <AnimatedCard delay={400}>
+            <AnimatedCard delay={400}>
                 <h3 className="text-2xl font-bold text-[#4E2A2A] mb-4">Service Analytics</h3>
-                 {chartData.length > 0 ? <ServiceAnalyticsChart data={chartData} /> : <p className="text-center text-gray-500 py-8">No application data to display chart.</p>}
+                {chartData.length > 0 ? <ServiceAnalyticsChart data={chartData} /> : <p className="text-center text-gray-500 py-8">No application data to display chart.</p>}
             </AnimatedCard>
             <AnimatedCard delay={500}>
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <h3 className="text-2xl font-bold text-[#4E2A2A]">All Applications</h3>
                     <div className="w-full md:w-1/3">
-                         <Input id="search" label="Search by User ID" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                        <Input id="search" label="Search by User ID" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                     </div>
                     <div className="flex space-x-2">{['ALL', 'PENDING', 'APPROVED', 'REJECTED'].map(f => (<Button key={f} onClick={() => setFilter(f)} variant={filter === f ? 'primary' : 'secondary'} className="w-auto px-4 py-2 text-xs">{f}</Button>))}</div>
                 </div>
-                 <div className="overflow-x-auto -mx-6 md:-mx-8"><table className="min-w-full"><thead className="border-b-2 border-gray-200"><tr><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">User ID</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Application ID</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Service</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Date</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">App Status</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Payment</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Actions</th></tr></thead><tbody className="divide-y divide-gray-100">
+                <div className="overflow-x-auto -mx-6 md:-mx-8"><table className="min-w-full"><thead className="border-b-2 border-gray-200"><tr><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">User ID</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Application ID</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Service</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Date</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">App Status</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Payment</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Actions</th></tr></thead><tbody className="divide-y divide-gray-100">
                     {filteredApps.map(app => (<tr key={app.applicationId} className="hover:bg-gray-50/50 transition-colors"><td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{app.userId}</td><td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{app.applicationId}</td><td className="px-6 py-4 whitespace-nowrap text-md font-medium text-[#4E2A2A]">{app.serviceName}</td><td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{app.submissionDate}</td><td className="px-6 py-4 whitespace-nowrap text-md"><StatusBadge status={app.status} /></td><td className="px-6 py-4 whitespace-nowrap text-md"><StatusBadge status={app.paymentStatus} /></td><td className="px-6 py-4 whitespace-nowrap text-md font-medium space-x-2">{app.status === 'PENDING' && app.paymentStatus === 'COMPLETED' ? (<><Button onClick={() => handleApprove(app.applicationId)} variant="success" className="w-auto px-3 py-1 text-xs">Approve</Button><Button onClick={() => handleReject(app.applicationId)} variant="danger" className="w-auto px-3 py-1 text-xs">Reject</Button></>) : app.paymentStatus === 'PENDING' ? (<span className="text-xs text-gray-400">Awaiting Payment</span>) : <span className="text-gray-400">--</span>}</td></tr>))}
                 </tbody></table></div>
             </AnimatedCard>
-             <AnimatedCard delay={600}>
+            <AnimatedCard delay={600}>
                 <h3 className="text-2xl font-bold text-[#4E2A2A] mb-4">Feedback Submissions</h3>
                 {feedback.length > 0 ? (
-                     <div className="overflow-x-auto -mx-6 md:-mx-8"><table className="min-w-full"><thead className="border-b-2 border-gray-200"><tr><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Date</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Last Updated</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Type</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Subject</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Message</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Status</th></tr></thead><tbody className="divide-y divide-gray-100">
+                    <div className="overflow-x-auto -mx-6 md:-mx-8"><table className="min-w-full"><thead className="border-b-2 border-gray-200"><tr><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Date</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Last Updated</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Type</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Subject</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Message</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Status</th></tr></thead><tbody className="divide-y divide-gray-100">
                         {feedback.map(item => (<tr key={item.id} className="hover:bg-gray-50/50 transition-colors"><td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{new Date(item.submission_date).toLocaleDateString()}</td><td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{new Date(item.updated_at).toLocaleDateString()}</td><td className="px-6 py-4 whitespace-nowrap text-md font-medium text-[#4E2A2A]">{item.feedbackType}</td><td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{item.subject}</td><td className="px-6 py-4 text-md text-gray-500"><p className="w-48 truncate" title={item.message}>{item.message}</p></td>
-                        <td className="px-6 py-4 whitespace-nowrap text-md">
-                           <Select 
-                             value={item.status}
-                             onChange={(e) => handleFeedbackStatusChange(item.id, e.target.value)}
-                             options={[{value: 'New', label: 'New'}, {value: 'In Progress', label: 'In Progress'}, {value: 'Resolved', label: 'Resolved'}]}
-                             className="w-40 text-xs"
-                           />
-                        </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-md">
+                                <Select
+                                    value={item.status}
+                                    onChange={(e) => handleFeedbackStatusChange(item.id, e.target.value)}
+                                    options={[{ value: 'New', label: 'New' }, { value: 'In Progress', label: 'In Progress' }, { value: 'Resolved', label: 'Resolved' }]}
+                                    className="w-40 text-xs"
+                                />
+                            </td>
                         </tr>))}
                     </tbody></table></div>
                 ) : <p className="text-center text-gray-500 py-8">No feedback has been submitted yet.</p>}
@@ -1119,7 +1188,7 @@ const AppContent = () => {
     const { route, navigate } = useApp();
     const { isAuthenticated, isAdmin, loading } = useAuth();
     useEffect(() => { const pUser = ['dashboard', 'profile', 'apply', 'payment', 'feedback']; const pAdmin = ['adminDashboard']; if (!loading && !isAuthenticated && (pUser.includes(route) || pAdmin.includes(route))) navigate('login'); if (!loading && isAuthenticated && !isAdmin && pAdmin.includes(route)) navigate('dashboard'); if (!loading && isAuthenticated && isAdmin && pUser.includes(route)) navigate('adminDashboard'); }, [route, isAuthenticated, isAdmin, loading, navigate]);
-    if (loading) return <div className="h-screen bg-[#FFFBF5]"><Spinner/></div>;
+    if (loading) return <div className="h-screen bg-[#FFFBF5]"><Spinner /></div>;
     const renderRoute = () => {
         switch (route) {
             case 'signup': return <AuthForm isLogin={false} />;
@@ -1142,7 +1211,7 @@ const AppContent = () => {
                 {renderRoute()}
             </main>
             <footer className="text-center py-6 mt-12 bg-white/50 border-t backdrop-blur-sm">
-                 <p className="text-gray-600">&copy; {new Date().getFullYear()} Government Service Portal. All rights reserved.</p>
+                <p className="text-gray-600">&copy; {new Date().getFullYear()} Government Service Portal. All rights reserved.</p>
             </footer>
         </div>
     );
@@ -1160,9 +1229,9 @@ export default function App() {
         rechartsScript.async = true;
         document.body.appendChild(rechartsScript);
 
-        return () => { 
+        return () => {
             document.body.removeChild(animeScript);
-            document.body.removeChild(rechartsScript); 
+            document.body.removeChild(rechartsScript);
         }
     }, []);
     return (<AuthProvider><AppProvider><AppContent /></AppProvider></AuthProvider>);

@@ -29,12 +29,19 @@ public class ApplicationController {
         return ResponseEntity.ok(newApplication);
     }
 
-    // --- NEW METHOD ---
     @GetMapping("/my-applications")
     public ResponseEntity<List<ApplicationListItemDTO>> getMyApplications(Authentication principal) {
         String userEmail = principal.getName();
         List<ApplicationListItemDTO> applications = applicationService.getApplicationsByUserEmail(userEmail);
         return ResponseEntity.ok(applications);
+    }
+
+    // --- NEW ENDPOINT ---
+    @GetMapping("/{id}")
+    public ResponseEntity<Application> getApplicationDetails(@PathVariable Long id, Authentication principal) {
+        String userEmail = principal.getName();
+        Application application = applicationService.getApplicationByIdForUser(id, userEmail);
+        return ResponseEntity.ok(application);
     }
 }
 

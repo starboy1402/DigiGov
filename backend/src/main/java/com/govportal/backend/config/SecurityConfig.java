@@ -3,7 +3,6 @@ package com.govportal.backend.config;
 import com.govportal.backend.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -43,10 +42,10 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/api/admin/login").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/feedback").permitAll() // Make this endpoint public
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/auth/**", "/api/admin/login", "/api/feedback").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN") // This single rule secures all admin routes
                 .anyRequest().authenticated()
+                
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

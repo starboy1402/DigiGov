@@ -50,8 +50,6 @@ public class JwtTokenProvider {
         return getClaimFromToken(token, Claims::getSubject);
     }
 
-    // --- NEW METHOD ---
-    // Extracts the roles from the token
     @SuppressWarnings("unchecked")
     public List<String> getRolesFromJWT(String token) {
         return getClaimFromToken(token, claims -> (List<String>) claims.get("roles"));

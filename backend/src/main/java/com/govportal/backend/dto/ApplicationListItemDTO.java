@@ -4,6 +4,7 @@ import com.govportal.backend.entity.Application;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.Map; // Import Map
 
 @Data
 public class ApplicationListItemDTO {
@@ -11,6 +12,6 @@ public class ApplicationListItemDTO {
     private String serviceName;
     private LocalDate submissionDate;
     private Application.ApplicationStatus status;
-    // We will add payment status here later when we build the payment feature
-     private Application.PaymentStatus paymentStatus;
+    private Application.PaymentStatus paymentStatus;
+    private Map<String, Object> serviceSpecificData; // Add this line
 }

@@ -8,6 +8,7 @@ import com.govportal.backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -29,7 +30,6 @@ public class FeedbackService {
         feedback.setMessage(feedbackDTO.getMessage());
         feedback.setStatus(Feedback.FeedbackStatus.New);
 
-        // If a user is logged in (email is present), associate the feedback with them
         if (userEmail != null) {
             Optional<User> userOptional = userRepository.findByEmail(userEmail);
             userOptional.ifPresent(feedback::setUser);
@@ -37,4 +37,21 @@ public class FeedbackService {
 
         return feedbackRepository.save(feedback);
     }
+
+    // --- NEW METHOD FOR ADMIN ---
+    @Transactional(readOnly = true)
+    public List<Feedback> getAllFeedback() {
+        return feedbackRepository.findAll();
+    }
+
+    // --- NEW METHOD FOR ADMIN ---
+    @Transactional
+    public Feedback updateFeedbackStatus(Long feedbackId, Feedback.FeedbackStatus newStatus) {
+        Feedback feedback = feedbackRepository.findById(feedbackId)
+                .orElseThrow(() -> new RuntimeException("Feedback not found with ID: " + feedbackId));
+        
+        feedback.setStatus(newStatus);
+        return feedbackRepository.save(feedback);
+    }
 }
+

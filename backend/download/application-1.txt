@@ -1,0 +1,24 @@
+GOVERNMENT SERVICE PORTAL - APPLICATION FORM
+=============================================
+
+SERVICE: Characteristic Certificate
+APPLICATION ID: 1
+SUBMISSION DATE: 2025-09-04
+STATUS: APPROVED
+
+APPLICANT DETAILS
+-----------------
+Name: alif hasan
+Father's Name: aziz
+Mother's Name: rima
+Date of Birth: 2024-01-01
+NID Number: 123456789014
+Profession: engineer
+
+SERVICE SPECIFIC DETAILS
+------------------------
+No service specific data available.
+
+---------------------------------------------
+This is a system-generated document.
+Downloaded on: 9/10/2025, 4:23:33 PM

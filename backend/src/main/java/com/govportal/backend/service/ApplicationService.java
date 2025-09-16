@@ -10,6 +10,7 @@ import com.govportal.backend.repository.ApplicationRepository;
 import com.govportal.backend.repository.CitizenProfileRepository;
 import com.govportal.backend.repository.ServiceRepository;
 import com.govportal.backend.repository.UserRepository;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,11 +50,7 @@ public class ApplicationService {
         application.setService(service);
         application.setSubmissionDate(LocalDate.now());
         application.setStatus(Application.ApplicationStatus.PENDING);
-        
-        // --- THIS IS THE CRUCIAL FIX ---
-        // Set the initial payment status to PENDING so it is not null
-        application.setPaymentStatus(Application.PaymentStatus.PENDING); 
-        
+        application.setPaymentStatus(Application.PaymentStatus.PENDING);
         application.setServiceSpecificData(applicationDTO.getServiceSpecificData());
 
         return applicationRepository.save(application);
@@ -71,6 +68,20 @@ public class ApplicationService {
                 .collect(Collectors.toList());
     }
 
+    // --- NEW METHOD ---
+    @Transactional(readOnly = true)
+    public Application getApplicationByIdForUser(Long applicationId, String userEmail) {
+        Application application = applicationRepository.findById(applicationId)
+            .orElseThrow(() -> new RuntimeException("Application not found with ID: " + applicationId));
+        
+        // Security check: ensure the application belongs to the requesting user
+        if (!application.getUser().getEmail().equals(userEmail)) {
+            throw new AccessDeniedException("You do not have permission to view this application.");
+        }
+        
+        return application;
+    }
+
     private ApplicationListItemDTO mapEntityToListItemDto(Application application) {
         ApplicationListItemDTO dto = new ApplicationListItemDTO();
         dto.setApplicationId(application.getApplicationId());
@@ -78,6 +89,7 @@ public class ApplicationService {
         dto.setSubmissionDate(application.getSubmissionDate());
         dto.setStatus(application.getStatus());
         dto.setPaymentStatus(application.getPaymentStatus());
+         dto.setServiceSpecificData(application.getServiceSpecificData()); // Add this line
         return dto;
     }
 }

@@ -139,6 +139,36 @@ const API = {
         }
         return response.json();
     },
+    uploadDocument: async (formData, token) => {
+        const response = await fetch(`${API_BASE_URL}/api/documents/upload`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData,
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || 'Document upload failed');
+        }
+        return response.text();
+    },
+    submitFeedback: async (data, token) => {
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        const response = await fetch(`${API_BASE_URL}/api/feedback`, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || 'Feedback submission failed');
+        }
+        return response.json();
+    },
     getAllApplications: async (token) => {
         const response = await fetch(`${API_BASE_URL}/api/admin/applications`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -178,36 +208,37 @@ const API = {
             throw new Error(errorText || 'Failed to reject application');
         }
         return response.json();
+    },
+    getFeedback: async (token) => {
+        const response = await fetch(`${API_BASE_URL}/api/admin/feedback`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) {
+            throw new Error('Failed to fetch feedback');
+        }
+        return response.json();
+    },
+    updateFeedbackStatus: async (id, status, token) => {
+        const response = await fetch(`${API_BASE_URL}/api/admin/feedback/${id}/status`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ status: status }),
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || 'Failed to update feedback status');
+        }
+        return response.json();
     }
 };
 
 
 // --- MOCK API (For features not yet built in the backend) ---
 const MOCK_API = {
-    uploadDocument: async (data) => { console.log("Uploading document:", data); await new Promise(r => setTimeout(r, 500)); return { success: true, documentId: `doc_${Date.now()}` }; },
-    submitFeedback: async (data) => {
-        console.log("Submitting feedback:", data); await new Promise(r => setTimeout(r, 500));
-        const newFeedback = { id: Date.now(), submission_date: new Date().toISOString(), status: 'New', ...data, admin_notes: null, updated_at: new Date().toISOString() };
-        const existingFeedback = JSON.parse(localStorage.getItem('feedback') || '[]');
-        localStorage.setItem('feedback', JSON.stringify([...existingFeedback, newFeedback]));
-        return { success: true };
-    },
-    getFeedback: async () => {
-        console.log("Getting all feedback"); await new Promise(r => setTimeout(r, 500));
-        return JSON.parse(localStorage.getItem('feedback') || '[]');
-    },
-    updateFeedbackStatus: async (feedbackId, newStatus) => {
-        console.log(`Updating feedback ${feedbackId} to ${newStatus}`);
-        await new Promise(r => setTimeout(r, 500));
-        const feedback = JSON.parse(localStorage.getItem('feedback') || '[]');
-        const updatedFeedback = feedback.map(item => 
-            item.id === feedbackId 
-            ? { ...item, status: newStatus, updated_at: new Date().toISOString() } 
-            : item
-        );
-        localStorage.setItem('feedback', JSON.stringify(updatedFeedback));
-        return { success: true };
-    }
+    // All mocks are now removed as the application is fully connected.
 };
 
 const SERVICES = [
@@ -350,9 +381,9 @@ const Header = ({}) => {
 };
 
 const StatusBadge = ({ status }) => {
-    const styles = { PENDING: 'bg-yellow-100 text-yellow-800 border-yellow-300', COMPLETED: 'bg-green-100 text-green-800 border-green-300', APPROVED: 'bg-purple-100 text-purple-800 border-purple-300', REJECTED: 'bg-red-100 text-red-800 border-red-300', New: 'bg-blue-100 text-blue-800 border-blue-300', 'In Progress': 'bg-indigo-100 text-indigo-800 border-indigo-300', Resolved: 'bg-gray-100 text-gray-800 border-gray-300' };
-    const icons = { PENDING: <Clock className="w-4 h-4 mr-1.5" />, COMPLETED: <CheckCircle className="w-4 h-4 mr-1.5" />, APPROVED: <CheckCircle className="w-4 h-4 mr-1.5" />, REJECTED: <XCircle className="w-4 h-4 mr-1.5" />, New: <MessageSquare className="w-4 h-4 mr-1.5" />, 'In Progress': <Clock className="w-4 h-4 mr-1.5" />, Resolved: <CheckCircle className="w-4 h-4 mr-1.5" /> };
-    return <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${styles[status]}`}>{icons[status]} {status}</span>;
+    const styles = { PENDING: 'bg-yellow-100 text-yellow-800 border-yellow-300', COMPLETED: 'bg-green-100 text-green-800 border-green-300', APPROVED: 'bg-purple-100 text-purple-800 border-purple-300', REJECTED: 'bg-red-100 text-red-800 border-red-300', New: 'bg-blue-100 text-blue-800 border-blue-300', 'In_Progress': 'bg-indigo-100 text-indigo-800 border-indigo-300', Resolved: 'bg-gray-100 text-gray-800 border-gray-300' };
+    const icons = { PENDING: <Clock className="w-4 h-4 mr-1.5" />, COMPLETED: <CheckCircle className="w-4 h-4 mr-1.5" />, APPROVED: <CheckCircle className="w-4 h-4 mr-1.5" />, REJECTED: <XCircle className="w-4 h-4 mr-1.5" />, New: <MessageSquare className="w-4 h-4 mr-1.5" />, 'In_Progress': <Clock className="w-4 h-4 mr-1.5" />, Resolved: <CheckCircle className="w-4 h-4 mr-1.5" /> };
+    return <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${styles[status]}`}>{icons[status]} {status.replace('_', ' ')}</span>;
 };
 
 // --- PAGES ---
@@ -583,8 +614,27 @@ const ApplicationPage = () => {
         };
 
         try {
-            await API.createApplication(applicationData, token);
-            alert('Application submitted successfully!'); 
+            const newApplication = await API.createApplication(applicationData, token);
+            
+            const uploadPromises = [];
+            if (documents.NID_COPY) {
+                const formData = new FormData();
+                formData.append('file', documents.NID_COPY);
+                formData.append('applicationId', newApplication.applicationId);
+                formData.append('documentType', 'NID_COPY');
+                uploadPromises.push(API.uploadDocument(formData, token));
+            }
+            if (documents.PASSPORT_PHOTO) {
+                const formData = new FormData();
+                formData.append('file', documents.PASSPORT_PHOTO);
+                formData.append('applicationId', newApplication.applicationId);
+                formData.append('documentType', 'PASSPORT_PHOTO');
+                uploadPromises.push(API.uploadDocument(formData, token));
+            }
+
+            await Promise.all(uploadPromises);
+
+            alert('Application and documents submitted successfully!'); 
             navigate('dashboard');
         } catch (error) { 
             alert(`Failed to submit application: ${error.message}`); 
@@ -713,7 +763,7 @@ const ApplicationPage = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">{renderExtraFields()}</div>
                         </div>
                         <div className="p-6 border rounded-xl bg-gray-50/30 border-gray-200">
-                            <h3 className="font-semibold text-lg mb-4 text-[#4E2A2A]">Document Uploads (Coming Soon)</h3>
+                            <h3 className="font-semibold text-lg mb-4 text-[#4E2A2A]">Document Uploads</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <Input id="NID_COPY" label="NID Copy (PDF, JPG)" type="file" onChange={handleFileChange} />
                                 <Input id="PASSPORT_PHOTO" label="Passport Size Photo (JPG, PNG)" type="file" onChange={handleFileChange} />
@@ -890,8 +940,9 @@ const FeedbackPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
+        const token = localStorage.getItem('token'); // Logged in users can submit feedback too
         try {
-            await MOCK_API.submitFeedback(formData);
+            await API.submitFeedback(formData, token);
             alert('Thank you! Your feedback has been submitted successfully.');
             navigate('home');
         } catch (error) {
@@ -967,7 +1018,7 @@ const AdminDashboard = () => {
             const [statsData, appsData, feedbackData] = await Promise.all([
                 API.getApplicationStats(token), 
                 API.getAllApplications(token),
-                MOCK_API.getFeedback() // This is still mocked
+                API.getFeedback(token) 
             ]); 
             setStats(statsData); 
             setApplications(appsData); 
@@ -1019,8 +1070,13 @@ const AdminDashboard = () => {
         }
     };
     const handleFeedbackStatusChange = async (feedbackId, newStatus) => {
-        await MOCK_API.updateFeedbackStatus(feedbackId, newStatus);
-        fetchData();
+        const token = localStorage.getItem('token');
+        try {
+            await API.updateFeedbackStatus(feedbackId, newStatus, token);
+            fetchData();
+        } catch (error) {
+            alert(`Error: ${error.message}`);
+        }
     };
 
     const StatCard = ({ title, value, icon, color, delay }) => (<AnimatedCard delay={delay} className={`flex items-center space-x-4 border-l-8 ${color}`}>{icon}<div><p className="text-md font-medium text-gray-500 truncate">{title}</p><p className="mt-1 text-4xl font-bold text-[#4E2A2A]">{value}</p></div></AnimatedCard>);
@@ -1060,7 +1116,7 @@ const AdminDashboard = () => {
                            <Select 
                              value={item.status}
                              onChange={(e) => handleFeedbackStatusChange(item.id, e.target.value)}
-                             options={[{value: 'New', label: 'New'}, {value: 'In Progress', label: 'In Progress'}, {value: 'Resolved', label: 'Resolved'}]}
+                             options={[{value: 'New', label: 'New'}, {value: 'In_Progress', label: 'In Progress'}, {value: 'Resolved', label: 'Resolved'}]}
                              className="w-40 text-xs"
                            />
                         </td>

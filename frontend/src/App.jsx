@@ -311,7 +311,7 @@ const AnimatedCard = ({ children, className = '', delay = 0 }) => {
     const cardRef = useAnime((el, anime) => {
         anime({ targets: el, translateY: [50, 0], opacity: [0, 1], duration: 800, delay, easing: 'easeOutExpo' });
     });
-    return <div ref={cardRef} className={`bg-white/80 backdrop-blur-sm shadow-2xl shadow-[#4E2A2A]/10 rounded-2xl p-6 md:p-8 ${className}`}>{children}</div>;
+    return <div ref={cardRef} className={`bg-gradient-to-br from-white to-gray-50 p-6 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-shadow ${className}`}>{children}</div>;
 };
 
 const Button = ({ children, onClick, type = 'button', variant = 'primary', className = '', disabled = false }) => {
@@ -1154,7 +1154,78 @@ const AdminDashboard = () => {
             alert(`Error: ${error.message}`);
         }
     };
-    
+
+    // download handler: builds a formatted text document and triggers a file download
+    const handleDownload = (app) => {
+        try {
+            const profile = {}; // Admin doesn't have profile in localStorage, use app data
+
+            const fmtISO = (d) => {
+                if (!d) return '';
+                const date = new Date(d);
+                if (isNaN(date.getTime())) return String(d);
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${y}-${m}-${day}`;
+            };
+
+            const lines = [];
+            lines.push('GOVERNMENT SERVICE PORTAL - APPLICATION FORM');
+            lines.push('=============================================');
+            lines.push('');
+            lines.push(`SERVICE: ${app.serviceName || 'Unknown Service'}`);
+            lines.push(`APPLICATION ID: ${app.applicationId || ''}`);
+            lines.push(`SUBMISSION DATE: ${fmtISO(app.submissionDate)}`);
+            lines.push(`STATUS: ${app.status || ''}`);
+            lines.push('');
+            lines.push('APPLICANT DETAILS');
+            lines.push('-----------------');
+            lines.push(`Name: ${profile.name || app.applicantName || ''}`);
+            lines.push(`Father's Name: ${profile.fathersName || app.fathersName || ''}`);
+            lines.push(`Mother's Name: ${profile.mothersName || app.mothersName || ''}`);
+            lines.push(`Date of Birth: ${fmtISO(profile.dateOfBirth || app.dateOfBirth)}`);
+            lines.push(`NID Number: ${profile.nidNumber || app.nidNumber || ''}`);
+            lines.push(`Profession: ${profile.profession || app.profession || ''}`);
+            lines.push('');
+            lines.push('SERVICE SPECIFIC DETAILS');
+            lines.push('------------------------');
+
+            const serviceData = app.serviceSpecificData || app.serviceSpecific || {};
+            const prettyKey = (k) => String(k).replace(/([A-Z])/g, ' $1').replace(/[_\-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+            if (serviceData && Object.keys(serviceData).length > 0) {
+                Object.entries(serviceData).forEach(([k, v]) => {
+                    lines.push(`${prettyKey(k)}: ${v}`);
+                });
+            } else if (app.purpose) {
+                lines.push(`Purpose: ${app.purpose}`);
+                if (app.referencePerson) lines.push(`Reference Person: ${app.referencePerson}`);
+            } else {
+                lines.push('No service specific data available.');
+            }
+
+            lines.push('');
+            lines.push('---------------------------------------------');
+            lines.push('This is a system-generated document.');
+            lines.push(`Downloaded on: ${new Date().toLocaleString()}`);
+
+            const content = lines.join('\n');
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `application-${app.applicationId || Date.now()}.txt`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Download error', err);
+            alert('Failed to generate download. See console for details.');
+        }
+    };
+
     // UPDATE THIS FUNCTION
     const handleFeedbackStatusChange = async (feedbackId, newStatus) => {
         const token = localStorage.getItem('token');
@@ -1191,7 +1262,7 @@ const AdminDashboard = () => {
                     <div className="flex space-x-2">{['ALL', 'PENDING', 'APPROVED', 'REJECTED'].map(f => (<Button key={f} onClick={() => setFilter(f)} variant={filter === f ? 'primary' : 'secondary'} className="w-auto px-4 py-2 text-xs">{f}</Button>))}</div>
                 </div>
                 <div className="overflow-x-auto -mx-6 md:-mx-8"><table className="min-w-full"><thead className="border-b-2 border-gray-200"><tr><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">User ID</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Application ID</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Service</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Date</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">App Status</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Payment</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Actions</th></tr></thead><tbody className="divide-y divide-gray-100">
-                    {filteredApps.map(app => (<tr key={app.applicationId} className="hover:bg-gray-50/50 transition-colors"><td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{app.userId}</td><td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{app.applicationId}</td><td className="px-6 py-4 whitespace-nowrap text-md font-medium text-[#4E2A2A]">{app.serviceName}</td><td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{app.submissionDate}</td><td className="px-6 py-4 whitespace-nowrap text-md"><StatusBadge status={app.status} /></td><td className="px-6 py-4 whitespace-nowrap text-md"><StatusBadge status={app.paymentStatus} /></td><td className="px-6 py-4 whitespace-nowrap text-md font-medium space-x-2">{app.status === 'PENDING' && app.paymentStatus === 'COMPLETED' ? (<><Button onClick={() => handleApprove(app.applicationId)} variant="success" className="w-auto px-3 py-1 text-xs">Approve</Button><Button onClick={() => handleReject(app.applicationId)} variant="danger" className="w-auto px-3 py-1 text-xs">Reject</Button></>) : app.paymentStatus === 'PENDING' ? (<span className="text-xs text-gray-400">Awaiting Payment</span>) : <span className="text-gray-400">--</span>}</td></tr>))}
+                    {filteredApps.map(app => (<tr key={app.applicationId} className="hover:bg-gray-50/50 transition-colors"><td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{app.userId}</td><td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{app.applicationId}</td><td className="px-6 py-4 whitespace-nowrap text-md font-medium text-[#4E2A2A]">{app.serviceName}</td><td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{app.submissionDate}</td><td className="px-6 py-4 whitespace-nowrap text-md"><StatusBadge status={app.status} /></td><td className="px-6 py-4 whitespace-nowrap text-md"><StatusBadge status={app.paymentStatus} /></td><td className="px-6 py-4 whitespace-nowrap text-md font-medium space-x-2"><Button onClick={() => handleDownload(app)} variant="primary" className="w-auto px-3 py-1 text-xs"><Download size={12} className="mr-1" />Download</Button>{app.status === 'PENDING' && app.paymentStatus === 'COMPLETED' ? (<><Button onClick={() => handleApprove(app.applicationId)} variant="success" className="w-auto px-3 py-1 text-xs">Approve</Button><Button onClick={() => handleReject(app.applicationId)} variant="danger" className="w-auto px-3 py-1 text-xs">Reject</Button></>) : app.paymentStatus === 'PENDING' ? (<span className="text-xs text-gray-400">Awaiting Payment</span>) : <span className="text-gray-400">--</span>}</td></tr>))}
                 </tbody></table></div>
             </AnimatedCard>
             <AnimatedCard delay={600}>

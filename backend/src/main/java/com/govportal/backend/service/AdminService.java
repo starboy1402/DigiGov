@@ -83,6 +83,15 @@ public class AdminService {
         dto.setSubmissionDate(app.getSubmissionDate());
         dto.setStatus(app.getStatus());
         dto.setPaymentStatus(app.getPaymentStatus());
+        dto.setServiceSpecificData(app.getServiceSpecificData());
+        if (app.getCitizenProfile() != null) {
+            dto.setApplicantName(app.getCitizenProfile().getName());
+            dto.setFathersName(app.getCitizenProfile().getFathersName());
+            dto.setMothersName(app.getCitizenProfile().getMothersName());
+            dto.setDateOfBirth(app.getCitizenProfile().getDateOfBirth());
+            dto.setNidNumber(app.getCitizenProfile().getNidNumber());
+            dto.setProfession(app.getCitizenProfile().getProfession());
+        }
         return dto;
     }
 }

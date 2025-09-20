@@ -58,7 +58,7 @@ public class AdminService {
     public AdminApplicationListItemDTO rejectApplication(Long applicationId, String adminUsername) {
         Application application = findApplicationById(applicationId);
         Admin admin = findAdminByUsername(adminUsername);
-        
+
         application.setStatus(Application.ApplicationStatus.REJECTED);
         application.setAdmin(admin);
         Application updatedApplication = applicationRepository.save(application);
@@ -95,4 +95,3 @@ public class AdminService {
         return dto;
     }
 }
-

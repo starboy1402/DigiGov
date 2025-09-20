@@ -22,4 +22,3 @@ public class AdminApplicationListItemDTO {
     private String nidNumber;
     private String profession;
 }
-

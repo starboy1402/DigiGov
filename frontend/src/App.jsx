@@ -208,29 +208,54 @@ const API = {
             throw new Error(errorText || 'Failed to reject application');
         }
         return response.json();
+    },
+    // Add these two new methods
+    getFeedback: async (token) => {
+        const response = await fetch(`${API_BASE_URL}/api/feedback`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) {
+            throw new Error('Failed to fetch feedback');
+        }
+        return response.json();
+    },
+    updateFeedbackStatus: async (id, status, token) => {
+        const response = await fetch(`${API_BASE_URL}/api/feedback/${id}/status`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ status }),
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || 'Failed to update feedback status');
+        }
+        return response.json();
     }
 };
 
 
 // --- MOCK API (For features not yet built in the backend) ---
-const MOCK_API = {
-    getFeedback: async () => {
-        console.log("Getting all feedback"); await new Promise(r => setTimeout(r, 500));
-        return JSON.parse(localStorage.getItem('feedback') || '[]');
-    },
-    updateFeedbackStatus: async (feedbackId, newStatus) => {
-        console.log(`Updating feedback ${feedbackId} to ${newStatus}`);
-        await new Promise(r => setTimeout(r, 500));
-        const feedback = JSON.parse(localStorage.getItem('feedback') || '[]');
-        const updatedFeedback = feedback.map(item =>
-            item.id === feedbackId
-                ? { ...item, status: newStatus, updated_at: new Date().toISOString() }
-                : item
-        );
-        localStorage.setItem('feedback', JSON.stringify(updatedFeedback));
-        return { success: true };
-    }
-};
+// const MOCK_API = {
+//     getFeedback: async () => {
+//         console.log("Getting all feedback"); await new Promise(r => setTimeout(r, 500));
+//         return JSON.parse(localStorage.getItem('feedback') || '[]');
+//     },
+//     updateFeedbackStatus: async (feedbackId, newStatus) => {
+//         console.log(`Updating feedback ${feedbackId} to ${newStatus}`);
+//         await new Promise(r => setTimeout(r, 500));
+//         const feedback = JSON.parse(localStorage.getItem('feedback') || '[]');
+//         const updatedFeedback = feedback.map(item =>
+//             item.id === feedbackId
+//                 ? { ...item, status: newStatus, updated_at: new Date().toISOString() }
+//                 : item
+//         );
+//         localStorage.setItem('feedback', JSON.stringify(updatedFeedback));
+//         return { success: true };
+//     }
+// };
 
 const SERVICES = [
     { id: 1, name: "Characteristic Certificate" },
@@ -1078,7 +1103,7 @@ const AdminDashboard = () => {
             const [statsData, appsData, feedbackData] = await Promise.all([
                 API.getApplicationStats(token),
                 API.getAllApplications(token),
-                MOCK_API.getFeedback() // This is still mocked
+                API.getFeedback(token) // CHANGE THIS LINE
             ]);
             setStats(statsData);
             setApplications(appsData);
@@ -1129,9 +1154,16 @@ const AdminDashboard = () => {
             alert(`Error: ${error.message}`);
         }
     };
+    
+    // UPDATE THIS FUNCTION
     const handleFeedbackStatusChange = async (feedbackId, newStatus) => {
-        await MOCK_API.updateFeedbackStatus(feedbackId, newStatus);
-        fetchData();
+        const token = localStorage.getItem('token');
+        try {
+            await API.updateFeedbackStatus(feedbackId, newStatus, token);
+            fetchData();
+        } catch (error) {
+            alert(`Error updating feedback status: ${error.message}`);
+        }
     };
 
     const StatCard = ({ title, value, icon, color, delay }) => (<AnimatedCard delay={delay} className={`flex items-center space-x-4 border-l-8 ${color}`}>{icon}<div><p className="text-md font-medium text-gray-500 truncate">{title}</p><p className="mt-1 text-4xl font-bold text-[#4E2A2A]">{value}</p></div></AnimatedCard>);
@@ -1166,12 +1198,13 @@ const AdminDashboard = () => {
                 <h3 className="text-2xl font-bold text-[#4E2A2A] mb-4">Feedback Submissions</h3>
                 {feedback.length > 0 ? (
                     <div className="overflow-x-auto -mx-6 md:-mx-8"><table className="min-w-full"><thead className="border-b-2 border-gray-200"><tr><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Date</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Last Updated</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Type</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Subject</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Message</th><th className="px-6 py-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">Status</th></tr></thead><tbody className="divide-y divide-gray-100">
-                        {feedback.map(item => (<tr key={item.id} className="hover:bg-gray-50/50 transition-colors"><td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{new Date(item.submission_date).toLocaleDateString()}</td><td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{new Date(item.updated_at).toLocaleDateString()}</td><td className="px-6 py-4 whitespace-nowrap text-md font-medium text-[#4E2A2A]">{item.feedbackType}</td><td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{item.subject}</td><td className="px-6 py-4 text-md text-gray-500"><p className="w-48 truncate" title={item.message}>{item.message}</p></td>
+                        {feedback.map(item => (<tr key={item.id} className="hover:bg-gray-50/50 transition-colors"><td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{new Date(item.submissionDate).toLocaleDateString()}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{new Date(item.updatedAt).toLocaleDateString()}</td><td className="px-6 py-4 whitespace-nowrap text-md font-medium text-[#4E2A2A]">{item.feedbackType}</td><td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{item.subject}</td><td className="px-6 py-4 text-md text-gray-500"><p className="w-48 truncate" title={item.message}>{item.message}</p></td>
                             <td className="px-6 py-4 whitespace-nowrap text-md">
                                 <Select
                                     value={item.status}
                                     onChange={(e) => handleFeedbackStatusChange(item.id, e.target.value)}
-                                    options={[{ value: 'New', label: 'New' }, { value: 'In Progress', label: 'In Progress' }, { value: 'Resolved', label: 'Resolved' }]}
+                                    options={[{ value: 'New', label: 'New' }, { value: 'In_Progress', label: 'In Progress' }, { value: 'Resolved', label: 'Resolved' }]}
                                     className="w-40 text-xs"
                                 />
                             </td>

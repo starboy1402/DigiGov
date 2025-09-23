@@ -9,5 +9,6 @@ import java.util.Optional;
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
     // optional helper to detect duplicate transaction submissions
+    // SQL: SELECT * FROM payments WHERE transaction_id = ?;
     Optional<Payment> findByTransactionId(String transactionId);
 }

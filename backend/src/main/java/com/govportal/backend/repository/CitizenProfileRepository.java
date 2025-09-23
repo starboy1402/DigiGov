@@ -9,9 +9,10 @@ import java.util.Optional;
 
 @Repository
 public interface CitizenProfileRepository extends JpaRepository<CitizenProfile, Long> {
-    
+
+    // SQL: SELECT * FROM citizen_profiles WHERE user_id = ?;
     Optional<CitizenProfile> findByUser(User user);
 
+    // SQL: SELECT * FROM citizen_profiles WHERE user_email = ?;
     Optional<CitizenProfile> findByUserEmail(String email);
 }
-

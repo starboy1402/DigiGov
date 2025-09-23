@@ -1,0 +1,163 @@
+Step 1: Jane Signs Up 
+
+Frontend Action: Jane submits the "Sign Up" form. 
+
+API Call: POST /api/auth/signup 
+
+Backend Logic (AuthService.signUp): 
+
+Query 1 (Verification): Before creating an account, the system must ensure her email isn't already taken. 
+
+SQL 
+
+-- Purpose: Check for duplicate emails. 
+SELECT * FROM users WHERE email = 'jane@example.com'; 
+ 
+
+Query 2 (Creation): Since no existing user is found, her account is created. 
+
+SQL 
+
+-- Purpose: Add Jane's new account to the database. 
+INSERT INTO users (email, phone, password_hash) VALUES ('jane@example.com', '12345', '$2a$10$...'); 
+ 
+
+ --------------------------------------------------
+
+Step 2: Jane Creates Her Profile 
+
+Frontend Action: After logging in, Jane fills out her citizen profile form. 
+
+API Call: POST /api/citizen-profiles 
+
+Backend Logic (CitizenProfileService.createProfile): 
+
+Query 1 (Verification): The service first needs to find Jane's User record based on her login token (which contains her email). 
+
+SQL 
+
+-- Purpose: Get the full user record for the logged-in user. 
+SELECT * FROM users WHERE email = 'jane@example.com'; 
+ 
+
+Query 2 (Verification): It then checks if she already has a profile to prevent creating a duplicate. 
+
+SQL 
+
+-- Purpose: Ensure a user cannot have more than one profile. 
+SELECT * FROM citizen_profiles WHERE user_id = 1; -- Assuming Jane's user_id is 1 
+ 
+
+Query 3 (Creation): Since no profile exists, the new one is saved. 
+
+SQL 
+
+-- Purpose: Store Jane's detailed information. 
+INSERT INTO citizen_profiles (user_id, name, nid_number, ...) VALUES (1, 'Jane Doe', '1990123456', ...); 
+
+ 
+-----------------------------------------------------------------
+Step 3: Jane Applies for a "Citizen Certificate Service" 
+
+Frontend Action: Jane fills out the application form and clicks "Submit." 
+
+API Call: POST /api/applications 
+
+Backend Logic (ApplicationService.createApplication): This is the most query-intensive step, as it needs to verify three separate pieces of information before it can proceed. 
+
+Query 1 (User Verification): Find the User record for Jane. 
+
+SQL 
+
+-- Purpose: Confirm the user submitting the application exists. 
+SELECT * FROM users WHERE email = 'jane@example.com'; 
+ 
+
+Query 2 (Profile Verification): Ensure she has a citizen profile. 
+
+SQL 
+
+-- Purpose: Confirm the user has a profile, which is required for an application. 
+SELECT * FROM citizen_profiles WHERE user_id = 1; 
+ 
+
+Query 3 (Service Verification): Validate that the service she's applying for (e.g., service_id = 5) actually exists. 
+
+SQL 
+
+-- Purpose: Ensure the requested service is valid. 
+SELECT * FROM services WHERE service_id = 5; 
+ 
+
+Query 4 (Creation): With all checks passed, the application is created. 
+
+SQL 
+
+-- Purpose: Create the new application record, linking all verified information. 
+INSERT INTO applications (user_id, citizen_profile_id, service_id, ...) VALUES (1, 1, 5, ...); 
+ 
+
+ 
+
+Step 4: Jane Submits Payment for Her Application
+After submitting, Jane's application has a status of PENDING and a payment status of PENDING. Her dashboard shows a "Submit Payment" button.
+
+Frontend Action: Jane clicks "Submit Payment." She is taken to a form where she enters her payment method (e.g., "BKASH") and the transaction ID she received.
+
+API Call: POST /api/payments
+
+Backend Logic (PaymentService.processPayment): This service performs several critical checks before finalizing the payment.
+
+Query 1 (Verification): First, it retrieves the application Jane is paying for to ensure it exists and is valid.
+
+SQL
+
+-- Purpose: Fetch the application to verify its status and link the payment to it.
+SELECT * FROM applications WHERE application_id = 1;
+Query 2 (Verification): It then checks if the transaction ID Jane provided has already been used, to prevent duplicate or fraudulent payments.
+
+SQL
+
+-- Purpose: Prevent the same transaction from being used for multiple payments.
+SELECT * FROM payments WHERE transaction_id = 'BKASH123XYZ';
+Query 3 (Creation): Assuming the transaction is new, a record of the payment is created.
+
+SQL
+
+-- Purpose: Log the new payment transaction in the database.
+INSERT INTO payments (application_id, amount, payment_method, transaction_id, status, payment_date) VALUES (1, 200.00, 'BKASH', 'BKASH123XYZ', 'COMPLETED', '2025-09-23 11:45:00');
+Query 4 (Update): Finally, the service updates Jane's original application to reflect that it has been paid.
+
+SQL
+
+-- Purpose: Update the application's status to show payment is complete.
+UPDATE applications SET payment_status = 'COMPLETED' WHERE application_id = 1;
+Step 5: Jane Uploads Required Documents
+Frontend Action: On the application form, Jane selects her NID copy and a passport photo to upload.
+
+API Call: For each file, the frontend sends a POST request to /api/documents/upload.
+
+Backend Logic (DocumentController.uploadFile):
+
+Query 1 (Verification): The controller first verifies that the application ID provided with the file is valid.
+
+SQL
+
+-- Purpose: Ensure the document is being attached to a real application.
+SELECT * FROM applications WHERE application_id = 1;
+The FileStorageService saves the file to the ./uploads directory on the server.
+
+Query 2 (Creation): A record of the document is then saved to the database.
+
+SQL
+
+-- Purpose: Create a database record linking the file to the application.
+-- This query runs for each uploaded file.
+INSERT INTO documents (application_id, document_type, file_name, file_path) VALUES (1, 'NID_COPY', 'jane_nid.pdf', 'cc3be6a3-9bf3-437d-aa09-a53a077f8f68.pdf');
+
+ 
+ 
+
+ 
+
+ 

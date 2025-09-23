@@ -2,6 +2,7 @@ package com.govportal.backend.controller;
 
 import com.govportal.backend.dto.CitizenProfileDTO;
 import com.govportal.backend.service.CitizenProfileService;
+
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

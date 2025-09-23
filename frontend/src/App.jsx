@@ -1,5 +1,6 @@
 import React, { useState, useEffect, createContext, useContext, useRef } from 'react';
 import { CheckCircle, XCircle, Clock, BarChart, User, FileText, DollarSign, LogIn, UserPlus, Home, Shield, ArrowRight, Edit, Download, HeartPulse, Baby, LandPlot, Receipt, MessageSquare } from 'lucide-react';
+import jsPDF from 'jspdf';
 
 // --- Anime.js (CDN) ---
 const useAnime = (animationFn, deps = []) => {
@@ -885,7 +886,7 @@ const UserDashboard = () => {
         checkProfileAndFetchApps();
     }, [user, navigate, logout, route]);
 
-    // download handler: builds a formatted text document and triggers a file download
+    // download handler: builds a formatted PDF document and triggers a file download
     const handleDownload = (app) => {
         try {
             const profile = JSON.parse(localStorage.getItem('profile') || '{}');
@@ -900,56 +901,54 @@ const UserDashboard = () => {
                 return `${y}-${m}-${day}`;
             };
 
-            const lines = [];
-            lines.push('GOVERNMENT SERVICE PORTAL - APPLICATION FORM');
-            lines.push('=============================================');
-            lines.push('');
-            lines.push(`SERVICE: ${app.serviceName || getServiceName(app.serviceId) || 'Unknown Service'}`);
-            lines.push(`APPLICATION ID: ${app.applicationId || ''}`);
-            lines.push(`SUBMISSION DATE: ${fmtISO(app.submissionDate)}`);
-            lines.push(`STATUS: ${app.status || ''}`);
-            lines.push('');
-            lines.push('APPLICANT DETAILS');
-            lines.push('-----------------');
-            lines.push(`Name: ${profile.name || app.applicantName || ''}`);
-            lines.push(`Father's Name: ${profile.fathersName || app.fathersName || ''}`);
-            lines.push(`Mother's Name: ${profile.mothersName || app.mothersName || ''}`);
-            lines.push(`Date of Birth: ${fmtISO(profile.dateOfBirth || app.dateOfBirth)}`);
-            lines.push(`NID Number: ${profile.nidNumber || app.nidNumber || ''}`);
-            lines.push(`Profession: ${profile.profession || app.profession || ''}`);
-            lines.push('');
-            lines.push('SERVICE SPECIFIC DETAILS');
-            lines.push('------------------------');
+            const doc = new jsPDF();
+            let y = 10;
+
+            const addLine = (text) => {
+                doc.text(text, 10, y);
+                y += 10;
+            };
+
+            addLine('GOVERNMENT SERVICE PORTAL - APPLICATION FORM');
+            addLine('=============================================');
+            addLine('');
+            addLine(`SERVICE: ${app.serviceName || getServiceName(app.serviceId) || 'Unknown Service'}`);
+            addLine(`APPLICATION ID: ${app.applicationId || ''}`);
+            addLine(`SUBMISSION DATE: ${fmtISO(app.submissionDate)}`);
+            addLine(`STATUS: ${app.status || ''}`);
+            addLine('');
+            addLine('APPLICANT DETAILS');
+            addLine('-----------------');
+            addLine(`Name: ${profile.name || app.applicantName || ''}`);
+            addLine(`Father's Name: ${profile.fathersName || app.fathersName || ''}`);
+            addLine(`Mother's Name: ${profile.mothersName || app.mothersName || ''}`);
+            addLine(`Date of Birth: ${fmtISO(profile.dateOfBirth || app.dateOfBirth)}`);
+            addLine(`NID Number: ${profile.nidNumber || app.nidNumber || ''}`);
+            addLine(`Profession: ${profile.profession || app.profession || ''}`);
+            addLine('');
+            addLine('SERVICE SPECIFIC DETAILS');
+            addLine('------------------------');
 
             const serviceData = app.serviceSpecificData || app.serviceSpecific || {};
             const prettyKey = (k) => String(k).replace(/([A-Z])/g, ' $1').replace(/[_\-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
             if (serviceData && Object.keys(serviceData).length > 0) {
                 Object.entries(serviceData).forEach(([k, v]) => {
-                    lines.push(`${prettyKey(k)}: ${v}`);
+                    addLine(`${prettyKey(k)}: ${v}`);
                 });
             } else if (app.purpose) {
-                lines.push(`Purpose: ${app.purpose}`);
-                if (app.referencePerson) lines.push(`Reference Person: ${app.referencePerson}`);
+                addLine(`Purpose: ${app.purpose}`);
+                if (app.referencePerson) addLine(`Reference Person: ${app.referencePerson}`);
             } else {
-                lines.push('No service specific data available.');
+                addLine('No service specific data available.');
             }
 
-            lines.push('');
-            lines.push('---------------------------------------------');
-            lines.push('This is a system-generated document.');
-            lines.push(`Downloaded on: ${new Date().toLocaleString()}`);
+            addLine('');
+            addLine('---------------------------------------------');
+            addLine('This is a system-generated document.');
+            addLine(`Downloaded on: ${new Date().toLocaleString()}`);
 
-            const content = lines.join('\n');
-            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `application-${app.applicationId || Date.now()}.txt`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
+            doc.save(`application-${app.applicationId || Date.now()}.pdf`);
         } catch (err) {
             console.error('Download error', err);
             alert('Failed to generate download. See console for details.');
@@ -1155,7 +1154,7 @@ const AdminDashboard = () => {
         }
     };
 
-    // download handler: builds a formatted text document and triggers a file download
+    // download handler: builds a formatted PDF document and triggers a file download
     const handleDownload = (app) => {
         try {
             const profile = {}; // Admin doesn't have profile in localStorage, use app data
@@ -1170,56 +1169,54 @@ const AdminDashboard = () => {
                 return `${y}-${m}-${day}`;
             };
 
-            const lines = [];
-            lines.push('GOVERNMENT SERVICE PORTAL - APPLICATION FORM');
-            lines.push('=============================================');
-            lines.push('');
-            lines.push(`SERVICE: ${app.serviceName || 'Unknown Service'}`);
-            lines.push(`APPLICATION ID: ${app.applicationId || ''}`);
-            lines.push(`SUBMISSION DATE: ${fmtISO(app.submissionDate)}`);
-            lines.push(`STATUS: ${app.status || ''}`);
-            lines.push('');
-            lines.push('APPLICANT DETAILS');
-            lines.push('-----------------');
-            lines.push(`Name: ${profile.name || app.applicantName || ''}`);
-            lines.push(`Father's Name: ${profile.fathersName || app.fathersName || ''}`);
-            lines.push(`Mother's Name: ${profile.mothersName || app.mothersName || ''}`);
-            lines.push(`Date of Birth: ${fmtISO(profile.dateOfBirth || app.dateOfBirth)}`);
-            lines.push(`NID Number: ${profile.nidNumber || app.nidNumber || ''}`);
-            lines.push(`Profession: ${profile.profession || app.profession || ''}`);
-            lines.push('');
-            lines.push('SERVICE SPECIFIC DETAILS');
-            lines.push('------------------------');
+            const doc = new jsPDF();
+            let y = 10;
+
+            const addLine = (text) => {
+                doc.text(text, 10, y);
+                y += 10;
+            };
+
+            addLine('GOVERNMENT SERVICE PORTAL - APPLICATION FORM');
+            addLine('=============================================');
+            addLine('');
+            addLine(`SERVICE: ${app.serviceName || 'Unknown Service'}`);
+            addLine(`APPLICATION ID: ${app.applicationId || ''}`);
+            addLine(`SUBMISSION DATE: ${fmtISO(app.submissionDate)}`);
+            addLine(`STATUS: ${app.status || ''}`);
+            addLine('');
+            addLine('APPLICANT DETAILS');
+            addLine('-----------------');
+            addLine(`Name: ${profile.name || app.applicantName || ''}`);
+            addLine(`Father's Name: ${profile.fathersName || app.fathersName || ''}`);
+            addLine(`Mother's Name: ${profile.mothersName || app.mothersName || ''}`);
+            addLine(`Date of Birth: ${fmtISO(profile.dateOfBirth || app.dateOfBirth)}`);
+            addLine(`NID Number: ${profile.nidNumber || app.nidNumber || ''}`);
+            addLine(`Profession: ${profile.profession || app.profession || ''}`);
+            addLine('');
+            addLine('SERVICE SPECIFIC DETAILS');
+            addLine('------------------------');
 
             const serviceData = app.serviceSpecificData || app.serviceSpecific || {};
             const prettyKey = (k) => String(k).replace(/([A-Z])/g, ' $1').replace(/[_\-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
             if (serviceData && Object.keys(serviceData).length > 0) {
                 Object.entries(serviceData).forEach(([k, v]) => {
-                    lines.push(`${prettyKey(k)}: ${v}`);
+                    addLine(`${prettyKey(k)}: ${v}`);
                 });
             } else if (app.purpose) {
-                lines.push(`Purpose: ${app.purpose}`);
-                if (app.referencePerson) lines.push(`Reference Person: ${app.referencePerson}`);
+                addLine(`Purpose: ${app.purpose}`);
+                if (app.referencePerson) addLine(`Reference Person: ${app.referencePerson}`);
             } else {
-                lines.push('No service specific data available.');
+                addLine('No service specific data available.');
             }
 
-            lines.push('');
-            lines.push('---------------------------------------------');
-            lines.push('This is a system-generated document.');
-            lines.push(`Downloaded on: ${new Date().toLocaleString()}`);
+            addLine('');
+            addLine('---------------------------------------------');
+            addLine('This is a system-generated document.');
+            addLine(`Downloaded on: ${new Date().toLocaleString()}`);
 
-            const content = lines.join('\n');
-            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `application-${app.applicationId || Date.now()}.txt`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
+            doc.save(`application-${app.applicationId || Date.now()}.pdf`);
         } catch (err) {
             console.error('Download error', err);
             alert('Failed to generate download. See console for details.');

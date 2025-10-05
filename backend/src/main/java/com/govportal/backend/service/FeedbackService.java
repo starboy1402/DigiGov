@@ -2,8 +2,10 @@ package com.govportal.backend.service;
 
 import com.govportal.backend.dto.FeedbackDTO;
 import com.govportal.backend.dto.FeedbackListItemDTO; // Import the new DTO
+import com.govportal.backend.entity.Admin;
 import com.govportal.backend.entity.Feedback;
 import com.govportal.backend.entity.User;
+import com.govportal.backend.repository.AdminRepository;
 import com.govportal.backend.repository.FeedbackRepository;
 import com.govportal.backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -18,10 +20,13 @@ public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
     private final UserRepository userRepository;
+    private final AdminRepository adminRepository;
 
-    public FeedbackService(FeedbackRepository feedbackRepository, UserRepository userRepository) {
+    public FeedbackService(FeedbackRepository feedbackRepository, UserRepository userRepository,
+            AdminRepository adminRepository) {
         this.feedbackRepository = feedbackRepository;
         this.userRepository = userRepository;
+        this.adminRepository = adminRepository;
     }
 
     @Transactional
@@ -48,10 +53,19 @@ public class FeedbackService {
                 .collect(Collectors.toList());
     }
 
- @Transactional
-    public FeedbackListItemDTO updateFeedbackStatus(Long feedbackId, Feedback.FeedbackStatus newStatus) { // Change return type here
+    @Transactional
+    public FeedbackListItemDTO updateFeedbackStatus(Long feedbackId, Feedback.FeedbackStatus newStatus,
+            String adminUsername) { // Change return type here
         Feedback feedback = feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new RuntimeException("Feedback not found with ID: " + feedbackId));
+
+        // Set the admin who updated the status
+        if (adminUsername != null) {
+            Admin admin = adminRepository.findByUsername(adminUsername)
+                    .orElseThrow(() -> new RuntimeException("Admin not found with username: " + adminUsername));
+            feedback.setAdmin(admin);
+        }
+
         feedback.setStatus(newStatus);
         Feedback updatedFeedback = feedbackRepository.save(feedback);
         return mapEntityToDto(updatedFeedback); // Return the mapped DTO

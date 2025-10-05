@@ -26,7 +26,8 @@ public class FeedbackController {
     }
 
     @PostMapping
-    public ResponseEntity<Feedback> submitFeedback(@Valid @RequestBody FeedbackDTO feedbackDTO, Authentication principal) {
+    public ResponseEntity<Feedback> submitFeedback(@Valid @RequestBody FeedbackDTO feedbackDTO,
+            Authentication principal) {
         String userEmail = (principal != null) ? principal.getName() : null;
         Feedback savedFeedback = feedbackService.saveFeedback(feedbackDTO, userEmail);
         return new ResponseEntity<>(savedFeedback, HttpStatus.CREATED);
@@ -38,10 +39,17 @@ public class FeedbackController {
         return ResponseEntity.ok(feedbackService.getAllFeedback());
     }
 
-   @PutMapping("/{id}/status")
-    public ResponseEntity<FeedbackListItemDTO> updateFeedbackStatus(@PathVariable Long id, @RequestBody Map<String, String> body) { // Change return type here
+    @PutMapping("/{id}/status")
+    public ResponseEntity<FeedbackListItemDTO> updateFeedbackStatus(@PathVariable Long id,
+            @RequestBody Map<String, String> body, Authentication principal) { // Change return type here
+        String adminUsername = (principal != null) ? principal.getName() : null;
         Feedback.FeedbackStatus newStatus = Feedback.FeedbackStatus.valueOf(body.get("status"));
-        FeedbackListItemDTO updatedFeedbackDTO = feedbackService.updateFeedbackStatus(id, newStatus); // Get the DTO from the service
+        FeedbackListItemDTO updatedFeedbackDTO = feedbackService.updateFeedbackStatus(id, newStatus, adminUsername); // Get
+                                                                                                                     // the
+                                                                                                                     // DTO
+                                                                                                                     // from
+                                                                                                                     // the
+                                                                                                                     // service
         return ResponseEntity.ok(updatedFeedbackDTO); // Return the DTO
     }
 }

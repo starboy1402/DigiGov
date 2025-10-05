@@ -21,6 +21,10 @@ public class Feedback {
     @JoinColumn(name = "user_id") // This is nullable
     private User user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "admin_id") // Nullable for initial submissions, set when admin updates status
+    private Admin admin;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "feedback_type", nullable = false)
     private FeedbackType feedbackType;
@@ -34,7 +38,7 @@ public class Feedback {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private FeedbackStatus status;
-    
+
     @CreationTimestamp
     @Column(name = "submission_date", updatable = false)
     private Timestamp submissionDate;
